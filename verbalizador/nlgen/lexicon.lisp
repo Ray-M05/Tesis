@@ -83,9 +83,10 @@
   (getf (gethash sym *lexicon*) clave))
 
 ;; --- Excepciones comunes a los dominios -----------------------------
+;; tipo-programa ya NO necesita entrada: la regla de compuestos nominales
+;; produce "tipo de programa" y el genero sale del nucleo.
 (def-word 'dia           :sing "día"              :plur "días"              :gen :m)
 (def-word 'programa      :sing "programa"         :plur "programas"         :gen :m)
-(def-word 'tipo-programa :sing "tipo de programa" :plur "tipos de programa" :gen :m)
 (def-word 'emision       :sing "emisión"          :plur "emisiones"         :gen :f)
 (def-word 'duracion      :sing "duración"         :plur "duraciones"        :gen :f)
 (def-word 'codigo        :sing "código"           :plur "códigos"           :gen :m)
@@ -122,7 +123,18 @@
   "dia"    "día"      "dias"    "días"     "codigo"   "código"
   "numero" "número"   "ultimo"  "último"   "practica" "práctica"
   "maxima" "máxima"   "minima"  "mínima"
-  "maximo" "máximo"   "minimo"  "mínimo")
+  "maximo" "máximo"   "minimo"  "mínimo"
+  ;; Esdrujulas en -ico/-ica, que ninguna regla de terminacion alcanza
+  ;; porque la terminacion por si sola no dice donde cae el acento.
+  "fisica"      "física"      "fisicas"      "físicas"
+  "politica"    "política"    "politicas"    "políticas"
+  "quimica"     "química"     "matematica"   "matemática"
+  "informatica" "informática" "artistica"    "artística"
+  "practico"    "práctico"    "teorica"      "teórica"
+  ;; Otras
+  "biologia"  "biología"   "geografia" "geografía"
+  "ingles"    "inglés"     "miercoles" "miércoles"
+  "sabado"    "sábado"     "examen"    "examen")
 
 (defun spell (palabra)
   "Ortografia de una palabra suelta. La tabla manda; si no hay entrada,
@@ -157,30 +169,127 @@
           ((find (char palabra (1- n)) "aeiouáéíóu") (concatenate 'string palabra "s"))
           (t (concatenate 'string palabra "es")))))
 
-(defun symbol-words (sym)
-  "Simbolo -> palabras separadas, con la ortografia corregida.
-   RESTRICCION-SIN-MISMO-TIPO -> \"restricción sin mismo tipo\""
-  (format nil "~{~a~^ ~}"
-          (mapcar #'spell (split-char (string-downcase (symbol-name sym)) #\-))))
+;; =====================================================================
+;; PREDICADOS
+;; =====================================================================
+;; Un slot booleano 0/1 no es un sustantivo: es algo que la entidad HACE
+;; o ES. Ninguna regla puede deducir de ADMITE-DOBLE que "admite" es un
+;; verbo, asi que es un hecho lexico y vive en una tabla, igual que las
+;; excepciones de genero. Lo usan dos sitios: expr.lisp, para convertir
+;; (op-igual (admite-doble x) 0) en "x no admite turno doble", y
+;; document.lisp, para listar estos slots aparte en la seccion Entidades.
+
+(defvar *predicates* (make-hash-table)
+  "Simbolo de slot booleano -> frase verbal en afirmativo.")
+
+(defun def-predicate (sym frase)
+  (setf (gethash sym *predicates*) frase))
+
+(defun predicate-phrase (sym &key negated)
+  (let ((f (gethash sym *predicates*)))
+    (when f (if negated (concatenate 'string "no " f) f))))
+
+(def-predicate 'admite-doble     "admite turno doble")
+(def-predicate 'admite-tarde     "admite turnos de tarde")
+(def-predicate 'vive-lejos       "vive lejos del centro")
+(def-predicate 'es-contratado    "es contratado")
+(def-predicate 'educacion-fisica "es educación física")
+
+
+;; =====================================================================
+;; COMPUESTOS
+;; =====================================================================
+;; Un simbolo de varios segmentos puede ser tres cosas distintas, y el
+;; espanol las escribe de tres formas:
+;;
+;;   frase ya hecha por el autor   colisiones-de-profesor -> tal cual
+;;   sustantivo + adjetivo         educacion-fisica       -> yuxtapuestos
+;;   sustantivo + sustantivo       dia-preparacion        -> con "de"
+;;
+;; Las dos primeras se detectan por reglas generales: la presencia de una
+;; palabra funcional, y la terminacion tipica de adjetivo. Lo que queda
+;; es un compuesto nominal y lleva nexo.
+
+(defvar *function-words*
+  '("de" "del" "a" "al" "en" "con" "sin" "por" "para" "y" "o" "no"
+    "que" "el" "la" "los" "las" "un" "una" "se" "su" "sus"
+    "mismo" "misma" "solo" "sola" "cada" "todo" "toda")
+  "Si el simbolo lleva alguna, el autor ya escribio una frase: no se toca.")
+
+(defvar *adjective-suffixes*
+  '("ico" "ica" "icos" "icas" "ivo" "iva" "ivos" "ivas"
+    "oso" "osa" "osos" "osas" "al" "ales" "ar" "ares"
+    "ante" "antes" "ente" "entes" "ado" "ada" "ados" "adas"
+    "ido" "ida" "idos" "idas" "il" "iles" "able" "ables")
+  "Terminaciones tipicas de adjetivo. Decide entre yuxtaponer y poner 'de'.")
+
+(defun adjective-p (palabra)
+  (some (lambda (s) (sufijo-p palabra s)) *adjective-suffixes*))
+
+(defun function-word-p (palabra)
+  (member palabra *function-words* :test #'string=))
+
+(defun symbol-parts (sym)
+  "Segmentos del simbolo con la ortografia ya corregida."
+  (mapcar #'spell (split-char (string-downcase (symbol-name sym)) #\-)))
+
+(defun compound-kind (sym partes)
+  "Que clase de compuesto es: :simple, :frase, :adjetivo o :nominal.
+
+   El nexo solo se insinua en compuestos de DOS segmentos. Con tres o mas
+   el autor esta escribiendo una frase, no un compuesto, y meterle 'de'
+   la estropea: restriccion-educacion-fisica-temprano no es 'restricción
+   de educación física temprano'."
+  (cond ((null (cdr partes))                 :simple)
+        ((gethash sym *predicates*)          :frase)
+        ((some #'function-word-p partes)     :frase)
+        ((cddr partes)                       :frase)
+        ((adjective-p (second partes))       :adjetivo)
+        (t                                   :nominal)))
+
+(defun head-symbol (sym)
+  "Nucleo de un compuesto, como simbolo. El espanol toma de el el genero:
+   'el día de preparación', no 'la día preparación'."
+  (let ((partes (split-char (symbol-name sym) #\-)))
+    (if (cdr partes) (intern (first partes)) sym)))
 
 (defun nl-name (sym &key plural)
-  "Simbolo -> palabra. *lexicon* manda; si no hay entrada, guiones a
-   espacios con la ortografia de *spelling* aplicada palabra a palabra."
-  (let ((sing (or (lex sym :sing) (symbol-words sym))))
-    (if plural
-        (or (lex sym :plur) (pluralizar sing))
-        sing)))
+  "Simbolo -> sintagma. *lexicon* manda; si no, se compone por reglas.
+   En plural solo flexiona lo que debe: 'tipos de programa' y no
+   'tipo de programas'."
+  (or (if plural (lex sym :plur) (lex sym :sing))
+      (let* ((partes (symbol-parts sym))
+             (clase  (compound-kind sym partes))
+             (cabeza (if plural (pluralizar (first partes)) (first partes)))
+             (resto  (rest partes)))
+        (case clase
+          (:simple    cabeza)
+          ;; El nexo bloquea la flexion de lo que va detras.
+          (:nominal   (format nil "~a de ~{~a~^ ~}" cabeza resto))
+          ;; El adjetivo concuerda con el nucleo.
+          (:adjetivo  (format nil "~a~{ ~a~}"
+                              cabeza (if plural (mapcar #'pluralizar resto) resto)))
+          ;; Frase del autor: se respeta tal cual, solo flexiona el nucleo.
+          (t          (format nil "~a~{ ~a~}" cabeza resto))))))
+
+(defun word-gender (w)
+  "Genero por terminacion de una palabra suelta."
+  (if (or (sufijo-p w "ción") (sufijo-p w "sión")
+          (sufijo-p w "dad")  (sufijo-p w "tad")
+          (sufijo-p w "tud")  (sufijo-p w "umbre")
+          (sufijo-p w "ez")   (sufijo-p w "a"))
+      :f
+      :m))
 
 (defun nl-gender (sym)
-  "Genero gramatical. La tabla manda; si no, regla por terminacion."
+  "Genero gramatical. La tabla manda; si no, lo fija el NUCLEO del
+   compuesto, no la ultima palabra: el genero de 'día de preparación'
+   es el de 'día'."
   (or (lex sym :gen)
-      (let ((w (nl-name sym)))
-        (if (or (sufijo-p w "ción") (sufijo-p w "sión")
-                (sufijo-p w "dad")  (sufijo-p w "tad")
-                (sufijo-p w "tud")  (sufijo-p w "umbre")
-                (sufijo-p w "ez")   (sufijo-p w "a"))
-            :f
-            :m))))
+      (let ((h (head-symbol sym)))
+        (if (eq h sym)
+            (word-gender (nl-name sym))
+            (nl-gender h)))))
 
 (defun nl-article (sym &key definite plural)
   "el / la / los / las / un / una / unos / unas, segun genero y numero.

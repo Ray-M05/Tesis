@@ -31,8 +31,8 @@
 
 ;; ── Modulos del verbalizador ────────────────────────────────────────
 (cargar "nlgen/lexicon.lisp")       ; morfologia espanola + registro
+(cargar "nlgen/order.lisp")         ; grafo de entidades y orden logico
 (cargar "nlgen/expr.lisp")          ; capa literal: nodo -> frase
-(cargar "nlgen/order.lisp")         ; orden logico de las entidades
 (cargar "nlgen/idioms.lisp")        ; reconocimiento de patrones
 (cargar "nlgen/document.lisp")      ; el documento completo
 

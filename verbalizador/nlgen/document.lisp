@@ -61,14 +61,24 @@
     (append (nreverse otras) (list comb))))
 
 (defun entity->nl (nombre)
-  "'Un programa tiene nombre, tipo, duración y canal.'"
-  (let ((slots (gethash nombre *slots-de-entidad*)))
-    (if slots
-        (format nil "~a tiene ~a."
-                (capitalize-first (nl-noun nombre))
-                (join-nl (mapcar #'nl-name slots)))
-        (format nil "~a no tiene atributos."
-                (capitalize-first (nl-noun nombre))))))
+  "'Un programa tiene nombre, tipo, duración y canal.'
+
+   Los slots booleanos se separan: un plan no 'tiene admite doble', dice
+   SI admite turno doble. Es la misma tabla de predicados que usa
+   expr.lisp para no escribir 'es igual a 0'."
+  (let* ((slots (gethash nombre *slots-de-entidad*))
+         (preds (remove-if-not (lambda (s) (predicate-phrase s)) slots))
+         (otros (remove-if     (lambda (s) (predicate-phrase s)) slots))
+         (sujeto (capitalize-first (nl-noun nombre)))
+         (dice  (join-nl (mapcar (lambda (s) (format nil "si ~a" (predicate-phrase s)))
+                                 preds))))
+    (cond ((and otros preds)
+           (format nil "~a tiene ~a, y dice ~a."
+                   sujeto (join-nl (mapcar #'nl-name otros)) dice))
+          (preds (format nil "~a dice ~a." sujeto dice))
+          (otros (format nil "~a tiene ~a."
+                         sujeto (join-nl (mapcar #'nl-name otros))))
+          (t     (format nil "~a no tiene atributos." sujeto)))))
 
 (defun combination->nl (nombre)
   "'Una emisión está formada por un bloque y un programa.'"
@@ -131,6 +141,35 @@
 
 
 ;; =====================================================================
+;; QUE SE MIDE: MEDIDAS Y MECANICA
+;; =====================================================================
+
+(defun mechanical-queries (problema)
+  "Consultas que no son medidas del problema sino mecanica del lenguaje.
+
+   Una restriccion con umbral no se puede escribir directa, porque el
+   operando derecho se descarta en nppq. Hay que rodearla con un tqpq
+   cuantificado sobre una entidad que lleve el umbral como atributo, y
+   eso obliga a declarar una consulta auxiliar que solo existe para
+   contar las filas de esa entidad. Listarla bajo 'Qué se mide' como si
+   fuera un indicador del problema confunde: no mide nada que al lector
+   le interese, y su enunciado literal menciona el parametro suelto."
+  (let ((mec '()))
+    (dolist (r (append (problema-horario-restricciones-duras   problema)
+                       (problema-horario-restricciones-blandas problema)) mec)
+      (when (boundp r)
+        (let ((nodo (symbol-value r)))
+          (when (and (member (tipo-restriccion nodo) '(:tqpq :sbqp))
+                     (slot-value nodo 'elemento))
+            (let ((check (slot-value nodo 'comprobacion)))
+              (when (typep check 'operacion-binaria)
+                (let ((izq (slot-value check 'operando-izq)))
+                  (when (typep izq 'consulta-simple)
+                    (let ((sym (query-name izq)))
+                      (when sym (pushnew sym mec)))))))))))))
+
+
+;; =====================================================================
 ;; QUE SE DECIDE
 ;; =====================================================================
 
@@ -172,13 +211,14 @@
         (format out "## Qué se decide~%~%~a~%~%" (decision->nl problema))
 
         (format out "## Qué se mide~%~%")
-        (dolist (q (problema-horario-consultas problema))
-          (when (boundp q)
-            ;; smart-query->nl devuelve un sintagma nominal ("el numero
-            ;; de..."); aqui hace falta una oracion, de ahi el verbo.
-            (format out "**~a.** Se cuenta ~a.~%~%"
-                    (capitalize-first (nl-name q))
-                    (smart-query->nl (symbol-value q) problema))))
+        (let ((mec (mechanical-queries problema)))
+          (dolist (q (problema-horario-consultas problema))
+            (when (and (boundp q) (not (member q mec)))
+              ;; smart-query->nl devuelve un sintagma nominal ("el numero
+              ;; de..."); aqui hace falta una oracion, de ahi el verbo.
+              (format out "**~a.** Se cuenta ~a.~%~%"
+                      (capitalize-first (nl-name q))
+                      (smart-query->nl (symbol-value q) problema)))))
 
         (format out "## Restricciones~%~%")
         (format out "### Obligatorias~%~%")
@@ -227,12 +267,16 @@
 
       ;; Cobertura: todo lo declarado aparece en el documento.
       ;; char-equal porque las etiquetas llevan mayuscula inicial.
-      (dolist (n (append (entity-names problema)
-                         (problema-horario-consultas             problema)
-                         (problema-horario-restricciones-duras   problema)
-                         (problema-horario-restricciones-blandas problema)))
-        (unless (search (nl-name n) texto :test #'char-equal)
-          (push (format nil "sin verbalizar: ~a" n) avisos)))
+      ;; Las consultas mecanicas no se cuentan: no salen en 'Qué se mide'
+      ;; a proposito, y lo que de verdad hay que comprobar es que su
+      ;; restriccion este verbalizada, cosa que esta lista ya hace.
+      (let ((mec (mechanical-queries problema)))
+        (dolist (n (append (entity-names problema)
+                           (set-difference (problema-horario-consultas problema) mec)
+                           (problema-horario-restricciones-duras   problema)
+                           (problema-horario-restricciones-blandas problema)))
+          (unless (search (nl-name n) texto :test #'char-equal)
+            (push (format nil "sin verbalizar: ~a" n) avisos))))
 
       ;; Orden: nadie se menciona antes de presentarse.
       (let ((orden (entity-order (entity-names problema))))

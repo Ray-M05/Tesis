@@ -43,6 +43,34 @@
 
 
 ;; =====================================================================
+;; ALCANCE Y UNICIDAD DE CAMINO
+;; =====================================================================
+;; Lo usa expr.lisp para acortar las cadenas de acceso. Una cadena como
+;; (dia-preparacion (asignatura (plan (sesion u)))) se lee bien como
+;; "el dia de preparacion de u" SI desde la entidad de u no hay mas que
+;; un camino hasta un atributo con ese nombre. Si hubiera dos, la forma
+;; corta seria ambigua, y una frase ambigua es peor que una larga: la
+;; larga es fea y cierta, la ambigua puede leerse como lo que el modelo
+;; no dice.
+
+(defun reachable-entities (raiz)
+  "Entidades alcanzables desde RAIZ siguiendo slots que apuntan a otras
+   entidades. Incluye RAIZ."
+  (let ((vistas '()) (pila (list raiz)))
+    (loop while pila
+          for n = (pop pila)
+          unless (member n vistas)
+            do (push n vistas)
+               (dolist (r (entity-refs n)) (push r pila)))
+    vistas))
+
+(defun attr-unique-from-p (raiz attr)
+  "T si ATTR es slot de exactamente una entidad alcanzable desde RAIZ."
+  (= 1 (count-if (lambda (e) (member attr (gethash e *slots-de-entidad*)))
+                 (reachable-entities raiz))))
+
+
+;; =====================================================================
 ;; ORDEN TOPOLOGICO
 ;; =====================================================================
 
