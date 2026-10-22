@@ -98,6 +98,7 @@
 (def-word 'clase         :sing "clase"            :plur "clases"            :gen :f)
 (def-word 'aula          :sing "aula"             :plur "aulas"             :gen :f
                                                                             :art-m t)
+(def-word 'anno          :sing "año"              :plur "años"              :gen :m)
 
 
 ;; =====================================================================

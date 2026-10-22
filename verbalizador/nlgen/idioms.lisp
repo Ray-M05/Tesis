@@ -340,6 +340,55 @@
           (single-row-conditions m)))
 
 
+;; Una sola variable sobre la entidad combinacion y una sola igualdad, que
+;; compara una dimension de la fila contra el parametro de la consulta.
+
+(defun grouping-dim (expr var)
+  "Si EXPR es una cadena de accesos que arranca en VAR, devuelve la
+   dimension exterior: la que agrupa. NIL si no lo es."
+  (multiple-value-bind (camino raiz) (access-path expr)
+    (and camino (eq raiz var) (first camino))))
+
+(defun match-grouping (nodo problema)
+  (let ((m (match-single-row nodo problema)))
+    (when (and m
+               (= 1 (length (getf m :args)))
+               (typep (getf m :check) 'op-igual))
+      (let* ((check (getf m :check))
+             (arg   (first (getf m :args)))
+             (var   (getf m :var))
+             (izq   (slot-value check 'operando-izq))
+             (der   (slot-value check 'operando-der))
+             ;; El parametro puede venir en cualquiera de los dos lados.
+             (dim   (cond ((eq der arg) (grouping-dim izq var))
+                          ((eq izq arg) (grouping-dim der var)))))
+        (when dim
+          (list :entity (getf m :entity) :dim dim :arg arg))))))
+
+(defun grouping-tail (m)
+  "'en una misma instalacion', 'en un mismo turno'.
+   El articulo sale del genero crudo y NO de nl-article, a proposito: la
+   marca :art-m solo vale cuando el articulo toca al sustantivo, y aqui
+   se interpone 'mismo'. Es la regla de 'un aula' frente a 'una misma
+   aula', la misma que el lexico documenta."
+  (let* ((dim (getf m :dim))
+         (f   (eq :f (nl-gender dim))))
+    (format nil "en ~a mism~a ~a"
+            (if f "una" "un") (if f "a" "o") (nl-name dim))))
+
+(defun grouping->nl (m problema)
+  "Oracion de preferencia: minimax de reparto sobre una dimension."
+  (format nil "Se prefiere el reparto que reduce el número máximo de ~a ~a."
+          (nl-name (problema-horario-slot-identidad problema) :plural t)
+          (grouping-tail m)))
+
+(defun grouping->noun (m problema)
+  "Sintagma nominal, para la seccion de lo que se mide."
+  (format nil "~a que caen ~a"
+          (nl-name (problema-horario-slot-identidad problema) :plural t)
+          (grouping-tail m)))
+
+
 ;; =====================================================================
 ;; FAMILIA: CRUCE CONTRA UNA TABLA DE PROHIBICIONES
 ;; =====================================================================
@@ -475,8 +524,19 @@
     (:pairwise   (let ((m (match-pairwise q problema)))
                    (and m (if noun (pairwise->noun m problema)
                                    (pairwise->nl   m problema)))))
-    (:single-row (let ((m (match-single-row q problema)))
-                   (and m (if noun (single-row->noun m) (single-row->nl m)))))
+    ;; La agrupacion se intenta ANTES de single-row y solo para el
+    ;; sintagma nominal. El orden importa: match-single-row acepta
+    ;; cualquier condicion de una fila, asi que si va primero se queda
+    ;; con el caso y nunca se llega al reconocedor mas especifico.
+    ;; Para la oracion suelta no aplica: una agrupacion envuelta en un
+    ;; nppq diria "ninguna fila puede caer en un grupo", que no es lo
+    ;; que la restriccion significa. Ahi se cae a single-row, que si lo
+    ;; dice bien.
+    (:single-row (or (and noun
+                          (let ((g (match-grouping q problema)))
+                            (and g (grouping->noun g problema))))
+                     (let ((m (match-single-row q problema)))
+                       (and m (if noun (single-row->noun m) (single-row->nl m))))))
     (:join       (let ((m (match-join q problema)))
                    (and m (if noun (join->noun m) (join->nl m)))))
     (t nil)))
@@ -504,12 +564,22 @@
              (contar-distintos-dias
               (format nil "Se prefiere la solución que minimiza, ~a más cargad~a, el número de días distintos en los que interviene."
                       sup (if f "a" "o")))
-             ;; Minimax sobre un conteo de choques.
-             (t (let ((m (match-pairwise check problema)))
-                  (when m
-                    (format nil "Se prefiere la solución que minimiza, ~a más afectad~a, el número de ~a."
-                            sup (if f "a" "o")
-                            (pairwise->noun m problema)))))))))
+             ;; Minimax de reparto sobre una dimension, o sobre un conteo
+             ;; de choques. Se prueba la agrupacion primero porque es la
+             ;; forma mas especifica; si no encaja, se intenta el choque y
+             ;; si tampoco, se devuelve NIL y la capa literal se encarga.
+             (t (or (let ((g (match-grouping check problema)))
+                      ;; La dimension agrupada tiene que ser la que se
+                      ;; cuantifica. Si no coinciden, la oracion hablaria
+                      ;; de un maximo sobre un conjunto que no es el que
+                      ;; el minimizar recorre.
+                      (and g (eq (getf g :dim) e)
+                           (grouping->nl g problema)))
+                    (let ((m (match-pairwise check problema)))
+                      (when m
+                        (format nil "Se prefiere la solución que minimiza, ~a más afectad~a, el número de ~a."
+                                sup (if f "a" "o")
+                                (pairwise->noun m problema))))))))))
       (t nil))))
 
 (defun smart-constraint->nl (nodo problema)
