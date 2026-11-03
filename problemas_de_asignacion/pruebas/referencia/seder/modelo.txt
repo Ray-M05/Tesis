@@ -1,0 +1,58 @@
+============================================================
+MODELO DE OPTIMIZACION
+============================================================
+
+INDICES Y CONJUNTOS:
+  B  =  conjunto de brigadas      (|B| = 24)
+  T  =  conjunto de turno disponibles   (|T| = 3)
+  I  =  conjunto de instalacion disponibles   (|I| = 8)
+  I  =  conjunto de indisponibilidad   (|I| = 11)
+  P  =  conjunto de profesor   (|P| = 12)
+  T  =  conjunto de turno   (|T| = 3)
+  I  =  conjunto de instalacion   (|I| = 8)
+
+VARIABLES DE DECISION:
+  Para cada brigada t ∈ B se asigna:
+    turno_t ∈ T   (turno)
+    instalacion_t ∈ I   (instalacion)
+
+FUNCION OBJETIVO:
+  minimizar z(h) donde:
+    z(h) = 1000 · Σ_i incumpl_i(h)   [duras]
+         + 1 · Σ_j incumpl_j(h)   [blandas]
+
+RESTRICCIONES DURAS  (nppq / tqpq):
+  R1  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    clases_en_turno_no_disponible(h) = 0
+    donde:
+      clases_en_turno_no_disponible(h) = Σ_{u∈UBICACION, i∈INDISPONIBILIDAD}  [((anno(brigada(u)) = anno(i)) ∧ (turno(u) = turno(i)))]
+
+  R2  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    brigadas_que_no_caben(h) = 0
+    donde:
+      brigadas_que_no_caben(h) = Σ_{u∈UBICACION}  [(cantidad(brigada(u)) > capacidad(instalacion(u)))]
+
+  R3  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    colisiones_de_instalacion(h) = 0
+    donde:
+      colisiones_de_instalacion(h) = Σ_{u1∈UBICACION, u2∈UBICACION}  [((instalacion(u1) = instalacion(u2)) ∧ (turno(u1) = turno(u2)) ∧ (paridad(anno(brigada(u1))) = paridad(anno(brigada(u2)))) ∧ (brigada(u1) ≠ brigada(u2)))]
+
+  R4  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    colisiones_de_profesor(h) = 0
+    donde:
+      colisiones_de_profesor(h) = Σ_{p∈PROFESOR, u1∈UBICACION, u2∈UBICACION}  [((profesor(brigada(u1)) = p) ∧ (profesor(brigada(u2)) = p) ∧ (turno(u1) = turno(u2)) ∧ (paridad(anno(brigada(u1))) = paridad(anno(brigada(u2)))) ∧ (brigada(u1) ≠ brigada(u2)))]
+
+
+RESTRICCIONES BLANDAS  (tdpq / sbqp / minimizar):
+  R5  [OPTIMIZACIÓN — Minimizar]:
+    minimizar  max_{{x ∈ INSTALACION}}  brigadas_de_la_instalacion(h, x)
+    donde:
+      brigadas_de_la_instalacion(h, inst) = Σ_{u∈UBICACION}  [(instalacion(u) = inst)]
+
+  R6  [OPTIMIZACIÓN — Minimizar]:
+    minimizar  max_{{x ∈ TURNO}}  brigadas_del_turno(h, x)
+    donde:
+      brigadas_del_turno(h, tur) = Σ_{u∈UBICACION}  [(turno(u) = tur)]
+
+
+============================================================

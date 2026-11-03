@@ -249,7 +249,7 @@
 ;; -- Restricciones blandas ------------------------------------------
 
 ;; Primeros turnos asignados a profesores que viven lejos.
-;; Una restriccion nppq devuelve el conteo crudo, asi que la penalizacion es
+;; Una restriccion ndpq devuelve el conteo crudo, asi que la penalizacion es
 ;; proporcional al numero de veces que ocurre.
 (def-consulta primeros-turnos-de-lejanos ()
   :itera-sobre (u ubicacion)
@@ -260,12 +260,12 @@
   :devuelve 1)
 
 (defvar restriccion-evitar-primer-turno-a-los-lejanos
-  (def-nppq (op-mayor primeros-turnos-de-lejanos 0)))
+  (def-ndpq (op-mayor primeros-turnos-de-lejanos 0)))
 
 
 ;; Sesiones que un profesor imparte en un dia concreto.
 ;; El parametro se llama como la entidad a proposito: cuando la comparacion de
-;; un def-tqpq no es op-igual, el generador toma el nombre del bucle de la
+;; un def-tqpq o def-sbqp no es op-igual, el generador toma el nombre del bucle de la
 ;; entidad y la llamada a la consulta de su propio parametro. Si no coinciden,
 ;; el Python sale con una variable que no existe.
 (def-consulta sesiones-de-la-jornada (jornada)
@@ -276,9 +276,9 @@
   :operacion suma
   :devuelve 1)
 
-;; Tiene que pasar que ninguna jornada supere su tope.
+;; Seria bueno que ninguna jornada supere su tope.
 (defvar restriccion-tope-diario-de-profesor
-  (def-tqpq (op-menor-igual sesiones-de-la-jornada (tope jornada)) jornada))
+  (def-sbqp (op-menor-igual sesiones-de-la-jornada (tope jornada)) jornada))
 
 
 ;; =====================================================================

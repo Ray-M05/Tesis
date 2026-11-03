@@ -1,0 +1,78 @@
+{
+ "dominio": "tesis",
+ "semilla": 0,
+ "pasos": 42,
+ "segundos": 66.7,
+ "filas": [
+  [
+   2,
+   6,
+   2
+  ],
+  [
+   0,
+   5,
+   2
+  ],
+  [
+   0,
+   2,
+   3
+  ],
+  [
+   2,
+   6,
+   1
+  ],
+  [
+   0,
+   3,
+   0
+  ],
+  [
+   0,
+   5,
+   3
+  ],
+  [
+   1,
+   1,
+   0
+  ],
+  [
+   1,
+   5,
+   1
+  ],
+  [
+   2,
+   5,
+   0
+  ],
+  [
+   1,
+   5,
+   0
+  ],
+  [
+   2,
+   1,
+   3
+  ],
+  [
+   2,
+   0,
+   0
+  ],
+  [
+   0,
+   6,
+   2
+  ]
+ ],
+ "valores": {
+  "restriccion_sin_conflictos_de_horario": 0,
+  "restriccion_un_local_por_defensa": 0,
+  "restriccion_minimizar_carga_maxima": 3
+ }
+}

@@ -1,0 +1,42 @@
+============================================================
+MODELO DE OPTIMIZACION
+============================================================
+
+INDICES Y CONJUNTOS:
+  T  =  conjunto de tribunals      (|T| = 13)
+  F  =  conjunto de fecha disponibles   (|F| = 3)
+  M  =  conjunto de momento disponibles   (|M| = 7)
+  L  =  conjunto de local disponibles   (|L| = 4)
+  P  =  conjunto de profesor   (|P| = 35)
+
+VARIABLES DE DECISION:
+  Para cada tribunal t ∈ T se asigna:
+    fecha_t ∈ F   (fecha)
+    momento_t ∈ M   (momento)
+    local_t ∈ L   (local)
+
+FUNCION OBJETIVO:
+  minimizar z(h) donde:
+    z(h) = 1000 · Σ_i incumpl_i(h)   [duras]
+         + 1 · Σ_j incumpl_j(h)   [blandas]
+
+RESTRICCIONES DURAS  (nppq / tqpq):
+  R1  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    conflictos_de_horario(h) = 0
+    donde:
+      conflictos_de_horario(h) = Σ_{p∈PROFESOR, a1∈ASIGNACION, a2∈ASIGNACION}  [(((tutor(tribunal(a1)) = p) ∨ (oponente(tribunal(a1)) = p) ∨ (presidente(tribunal(a1)) = p) ∨ (vocal(tribunal(a1)) = p) ∨ (secretario(tribunal(a1)) = p)) ∧ ((tutor(tribunal(a2)) = p) ∨ (oponente(tribunal(a2)) = p) ∨ (presidente(tribunal(a2)) = p) ∨ (vocal(tribunal(a2)) = p) ∨ (secretario(tribunal(a2)) = p)) ∧ (fecha(a1) = fecha(a2)) ∧ (momento(a1) = momento(a2)) ∧ (tribunal(a1) ≠ tribunal(a2)))]
+
+  R2  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    colisiones_de_local(h) = 0
+    donde:
+      colisiones_de_local(h) = Σ_{a1∈ASIGNACION, a2∈ASIGNACION}  [((local(a1) = local(a2)) ∧ (fecha(a1) = fecha(a2)) ∧ (momento(a1) = momento(a2)) ∧ (tribunal(a1) ≠ tribunal(a2)))]
+
+
+RESTRICCIONES BLANDAS  (tdpq / sbqp / minimizar):
+  R3  [OPTIMIZACIÓN — Minimizar]:
+    minimizar  max_{{x ∈ PROFESOR}}  dias_asistidos(h, x)
+    donde:
+      dias_asistidos(h, prof) = |{ fecha(asig) : asig∈ASIGNACION,  ((tutor(tribunal(asig)) = prof) ∨ (oponente(tribunal(asig)) = prof) ∨ (presidente(tribunal(asig)) = prof) ∨ (vocal(tribunal(asig)) = prof) ∨ (secretario(tribunal(asig)) = prof)) }|
+
+
+============================================================
