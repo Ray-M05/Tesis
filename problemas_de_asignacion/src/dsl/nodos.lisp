@@ -1,0 +1,52 @@
+(in-package :dsl-ast)
+
+(defclass nodo-ast () ())
+
+(defclass ref-gen-entidad ()
+  ((nombre-entidad :initarg :nombre-entidad :reader nombre-entidad)))
+
+(defclass ref-especifica-ent () ())
+
+(def-nodos
+  (acceso-a-atributo-de-entidad ((atributo acceso-atributo)
+                                 (entidad  acceso-entidad)))
+  (consulta-simple
+    ((nombre             consulta-nombre)
+     (args               consulta-args)
+     (variable-iteracion consulta-var-iter)
+     (dominio-iteracion  consulta-dominio)
+     (variables-pares    consulta-vars-pares)
+     (dominio-pares      consulta-dominio-pares)
+     (comprobacion       consulta-comprobacion)
+     (operacion          consulta-operacion))
+    :key)
+  (aplicacion-de-consulta ((consulta   aplicacion-consulta)
+                           (argumentos aplicacion-argumentos)))
+  (operacion-de-consulta ((expresion operacion-expresion)))
+  (cuantificador-restriccion ((nombre       cuanti-nombre)
+                              (comprobacion cuanti-comprobacion)
+                              (para         cuanti-para)))
+  (operacion-binaria ((operando-izq :izq op-izq)
+                      (operando-der :der op-der)))
+  (operacion-unaria  ((operando op-operando))))
+
+(def-clase restriccion-ponderada (cuantificador-restriccion)
+  ((peso cuanti-peso)))
+
+(def-jerarquias
+  (operacion-de-consulta (expresion :self-named) suma contar-distintos)
+  (cuantificador-restriccion () restriccion-dura)
+  (restriccion-ponderada () restriccion-blanda objetivo)
+  (restriccion-dura () nppq tqpq)
+  (restriccion-blanda () ndpq sbqp)
+  (objetivo () minimizar maximizar)
+  (operacion-binaria (izq der)
+    operacion-aritmetica comprobacion-aritmetica operacion-logica-binaria)
+  (operacion-unaria (operando)
+    operacion-logica-unaria)
+  (operacion-logica-binaria (:variadic izq der :self-named) op-and op-or)
+  (operacion-logica-unaria  (operando :self-named) op-not)
+  (comprobacion-aritmetica (izq der :self-named)
+    op-igual op-distinto op-mayor op-menor op-mayor-igual op-menor-igual)
+  (operacion-aritmetica (izq der :self-named)
+    op-suma op-resta op-multiplicacion op-division))

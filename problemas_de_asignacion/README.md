@@ -9,13 +9,34 @@ Reimplementación por capas del DSL de problemas de asignación con restriccione
 
 | Capa | Carpeta | Qué hace | Estado |
 |---|---|---|---|
-| 1. DSL | `src/dsl/` | el lenguaje que escribe el usuario | pendiente |
+| 1. DSL | `src/dsl/` | el lenguaje que escribe el usuario | **completada** |
 | 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends | pendiente |
 | 3. Emisión | `src/emision/` | un destino por lenguaje: Python, notación matemática, español | pendiente |
 | 4. Estrategias | `src/estrategias/` | cómo se busca la solución | pendiente |
 | 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde | pendiente |
 
 Las carpetas se crean en la etapa que las llena.
+
+## Etapa 1: el DSL
+
+Los dominios están en `dominios/<dominio>/dominio.lisp` y solo describen el problema. Las pruebas comprueban cada entrada mal formada y comparan los cinco dominios con su referencia:
+
+```bash
+sbcl --script pruebas/correr.lisp
+```
+
+Para cargar un dominio desde Lisp:
+
+```lisp
+(require :asdf)
+(asdf:load-asd (truename "problemas_de_asignacion.asd"))
+(asdf:load-system "problemas_de_asignacion")
+(orquestacion:cargar-dominio "dominios/tv/dominio.lisp")
+```
+
+`cargar-dominio` crea el paquete `DOMINIO-TV` y devuelve el objeto `problema`. Lo que todavía no se genera es la salida: Python, notación matemática y español llegan en la etapa 3.
+
+Las decisiones están en [`decisiones-reimplementacion.md`](decisiones-reimplementacion.md), y la implementación de esta etapa en [`plan-etapa-1.md`](plan-etapa-1.md).
 
 ## Etapa 0: la referencia
 
