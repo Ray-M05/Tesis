@@ -16,5 +16,16 @@
                    (:file "consultas")
                    (:file "restricciones")
                    (:file "problema")))
+     (:module "analisis"
+      :serial t
+      :components ((:file "recorrido")
+                   (:file "modelo")
+                   (:file "tipos")
+                   (:file "atomos")
+                   (:file "simetria")
+                   (:file "familias")
+                   (:file "normalizar")
+                   (:file "orden")
+                   (:file "construir")))
      (:module "orquestacion"
       :components ((:file "cargar")))))))

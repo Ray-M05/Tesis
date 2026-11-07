@@ -1,6 +1,6 @@
 # Decisiones de la reimplementación
 
-Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están en [`plan-reimplementacion.md`](../plan-reimplementacion.md). La implementación de la capa del DSL está en [`plan-etapa-1.md`](plan-etapa-1.md).
+Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están en [`plan-reimplementacion.md`](../plan-reimplementacion.md). La implementación de la capa de análisis está en [`plan-etapa-2.md`](plan-etapa-2.md).
 
 ## Proyecto
 
@@ -79,6 +79,72 @@ Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están e
 |---|---|
 | Qué hacer con los nodos sin semántica | Se borran `comb-entidades`, `lista`, `acceso-a-elemento-de-comb`, `hay-elementos-duplicados` y `pertenece`: no los usa ni los traduce nadie. Se añaden si un dominio los necesita. |
 | Cómo se representa la aplicación de una consulta | Con un nodo nuevo, que comprueba el número de argumentos: la aplicación deja de ser una variable global. |
+
+## Análisis
+
+| En qué consistía | Decisión y motivo |
+|---|---|
+| Cómo se representa la familia | Dos jerarquías de clases: la forma de la restricción y la familia de la consulta. Son dos ejes independientes, y así los destinos despachan sobre cada uno sin `case` ni una clase por combinación. |
+| Qué pasa con lo que no encaja en ninguna familia | Pasa a una familia `generica` explícita, que Python y el español pueden emitir de forma literal. Un destino que no pueda con ella da error. Así una restricción válida y rara se puede seguir escribiendo. |
+| Cuándo se calcula el modelo | Todo al construirlo: los modelos son pequeños y así queda inmutable. |
+| A qué entidad apunta un slot | Se deduce de las instancias, y de los nombres en la combinación. Así los dominios no declaran tipos. |
+| Qué pasa con un camino o una comparación sin sentido | El análisis los rechaza y nombra la consulta y el slot: `(orden u)` sin ese slot, argumentos cambiados o comparar un día con un número. Si no, el error aparece lejos o la restricción nunca salta. |
+| Cómo se detecta si una condición es simétrica | Se intercambian las dos variables después de aplicar las igualdades de la propia condición. Comparar solo el texto da un aviso falso en `repeticiones-en-el-dia`. |
+| Cómo se entregan los avisos | Como una lista dentro del modelo: la función sigue siendo pura y las pruebas los leen directamente. Los muestra la orquestación. |
+| Qué se guarda de una comparación | Lo escrito, para la prosa, y cuándo se incumple, para el cálculo. La negación es un método y no se repite en cada destino. |
+| Si el modelo copia las expresiones | No: reutiliza los nodos del AST, y `generar-codigo` despacha sobre ellos. Solo se envuelven las consultas, para unir `:itera-sobre` y `:pares`. |
+| Si los pares simétricos y los ordenados son una familia | Dos, bajo un padre común: `choque-por-parejas` y `relacion-ordenada`. Agrupar por celda solo vale para los simétricos. |
+| Qué pasa con un ciclo entre entidades | Es un error que nombra el ciclo. Cortarlo sin avisar daría un orden incorrecto sin que nadie se entere. |
+| Si se avisa de una restricción que no depende de ninguna decisión | Sí, y cada restricción guarda qué decisiones toca. Ningún horario cambia su resultado: gasta tiempo y puede esconder un error en los datos. La etapa 4 podrá evaluarla una sola vez. |
+| Qué pasa con un slot cuyos valores son de clases distintas | Se rechaza, también con `nil` en unas filas y una referencia en otras. Ningún dominio lo hace, y así Python no tiene que manejar la ausencia de valor. |
+| Qué pasa con una variable declarada que no se usa | El análisis avisa y no la rechaza: el modelo sigue construyéndose, aunque el conteo se multiplique. Quien escribe el dominio decide. |
+| Cómo se recorren una consulta y sus parejas en el modelo | Una sola lista de `(variable dominio)`, con `:pareja` en las que vienen de `:pares`. Los destinos construyen sus bucles sin distinguir dos casos. |
+| De dónde sale el dominio de un parámetro | De las aplicaciones de la consulta: `(dias-asistidos p)` con `p` en `profesor`. Dos aplicaciones con dominios distintos son un error. Así los dominios no declaran tipos. |
+| Cuándo una ruta es una decisión | Si su raíz recorre la combinación y el slot más cercano a la raíz es una variable del problema. Mirar solo el nombre del slot confunde `(dia a)` de `ausencia`, que es un dato, con una decisión. |
+| Con qué orden se presentan las entidades | Cada una después de las que referencia; primero las que dependen de menos y, a igualdad, por nombre. Es el criterio del verbalizador, porque la prosa tiene que quedar idéntica. |
+| Qué valores puede tener un slot | Un número, un texto o una instancia, de un solo tipo en todas las filas. Un slot de una entidad sin instancias queda como desconocido, y sus comparaciones no se rechazan. |
+| Qué se comprueba de una restricción | Que un cuantificador lleve una condición y un objetivo un número. `(def-nppq r (q))` no significa nada y Python lo aceptaría sin avisar, así que no va a `generica`. |
+| Qué forma tiene cada restricción | `prohibicion` si se incumple con `q > 0` y no tiene `:para`; `cota` si compara una consulta con algo sin consultas; `minimax` si es un objetivo con alguna consulta; `generica` en otro caso. La forma no depende de cómo se escribió. |
+| Cuándo `q ≥ 1` equivale a `q > 0` | Solo si la consulta da enteros: `contar-distintos` o `suma` de un literal entero. Con `q = 0.5` no son lo mismo. |
+| Cómo se guarda cuándo se incumple una cota | Como un nodo del AST, por ejemplo `(op-mayor medida 5)`. `generar-codigo` lo traducirá sin lógica nueva. |
+| Si `contar-distintos` es una familia | No: es una `agrupacion`. La operación ya es una clase propia, y añadir una familia repetiría esa distinción. |
+| Qué familia tiene una pareja dudosa | Un choque simétrico sin `:pares` es `relacion-ordenada`, con aviso, porque así se comporta lo escrito. `:pares` con una condición no simétrica, sin celda o fuera de la combinación es `generica`. |
+| Qué pasa con los slots compartidos a través de una variable | Dos igualdades con la misma variable y la misma ruta equivalen a una ruta compartida. Va a la celda o a la clave, y `pareja-enlaces` conserva la variable. |
+| Qué consultas tiene el modelo | Las que aparecen en sus restricciones, en orden de primera aparición. Sustituyen a la lista `:consultas` y coinciden con ella. |
+| Qué dominios tiene el modelo | Los componentes de la combinación y lo que recorren consultas y `:para`, sin la combinación, que no tiene instancias. La identidad siempre está (2.3). |
+| Qué guarda el modelo del problema | Una referencia al objeto `problema`, además de lo que deduce. Entidades, slots e instancias no se copian. |
+| Cuándo se detiene el análisis | En el primer error, igual que el DSL. Los avisos no lo detienen. |
+| Cómo se organiza el análisis | Sin `dominios.lisp`: esa lógica está en `tipos.lisp` y `construir.lisp`. `tipos.lisp` y `simetria.lisp` son archivos propios. |
+
+## Emisión
+
+| En qué consistía | Decisión y motivo |
+|---|---|
+| Cuánto vale un choque con k filas en la misma celda | Las parejas que chocan, una vez cada una: k(k−1)/2 si todas chocan. Es lo que dicen `(suma 1)` y la prosa, y se comprueba exactamente: es la mitad del valor viejo. |
+| Cuánto vale incumplir una cota | Lo que falta para cumplirla: `q ≤ 5` con `q = 7` vale 2. Sigue la regla de `q > 0`, que vale `q`, y da pendiente a la búsqueda. Solo afecta a dos restricciones de Saúl. |
+| Cómo se imprime una instancia | Por su único slot de texto; si no lo hay, o hay varios, por todos sus slots. La regla mira tipos y cantidad, no nombres, y elige lo mismo que la vieja en las 36 entidades con instancias. |
+| Formato de la salida matemática | Solo LaTeX: entra directo en la tesis y hay un solo destino que mantener. |
+| Si hay un destino ILP en esta etapa | No: se reserva la rama del destino y se hace en una etapa propia, después de la 5. |
+| Si se capturan valores de docentes y Saúl | Sí, 10 horarios sin ejecutar el genético: evaluar una vez cuesta 0,01 s y 1 s. Lo caro era buscar. Los factibles siguen sin capturarse, porque esos sí exigen buscar. |
+| Si las sesiones de Saúl conservan `numero` | No: solo existía para que dos sesiones del mismo plan no fueran iguales por valor. Con identidad sobra, y es la prueba real de que funciona. |
+| Qué dice la prosa de `contar-distintos` | Lo que sale del slot contado: «fechas distintas» en tesis y «días distintos» en docentes. Cambian dos líneas de la prosa de tesis. |
+| Cómo se escribe el tope en la prosa | «El número de ubicaciones de cada profesor y cada día no puede superar 5.»: sale de `:para` con cualquier número de variables. |
+| En qué idioma van los identificadores | En español, también lo que se migre del verbalizador. Solo queda en inglés lo que pertenece a Common Lisp, a Python o a LaTeX. |
+| En qué orden se implementa la emisión | Fases grandes: destinos, Python y su comparación, matemática y español. Lo que da valores se valida primero. |
+
+### Cuánto vale cada restricción
+
+| Forma | Valor |
+|---|---|
+| Prohibición | El conteo. |
+| Cota | Lo que falta para cumplirla, sumado sobre `:para`. |
+| Minimax | El máximo. |
+| Maximizar | Menos el mínimo. |
+| Genérica | 1 por cada combinación que incumple. |
+
+En una cota, si se incumple, vale `|q − umbral|`, más 1 si la condición de incumplimiento incluye la igualdad. `q ≤ 5` se incumple con `q > 5`, así que `q = 7` vale 2; `q < 5` se incumple con `q ≥ 5`, así que vale 3.
+
+`evaluar` calcula todas, duras y blandas, y devuelve estos valores sin ponderar. El costo lo suma la estrategia: `penalización × Σ duras + Σ peso × blandas`. La penalización es de la estrategia, y el peso de cada blanda viene del dominio.
 
 ## Cómo queda cada recorrido
 

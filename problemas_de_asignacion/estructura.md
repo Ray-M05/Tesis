@@ -8,15 +8,17 @@ problemas_de_asignacion/
 ├── README.md                        portada: cómo correr y cargar
 ├── estructura.md                    este archivo
 ├── decisiones-reimplementacion.md   decisiones tomadas y su motivo
-├── plan-etapa-1.md                  plan de implementación del DSL
+├── plan-etapa-2.md                  plan de implementación del análisis
 ├── src/
 │   ├── paquetes.lisp                los paquetes
 │   ├── dsl/                         el lenguaje
+│   ├── analisis/                    el modelo intermedio
 │   └── orquestacion/cargar.lisp     carga de un dominio
 ├── dominios/<dominio>/dominio.lisp  tv, tesis, docentes, seder, saul
 └── pruebas/
     ├── correr.lisp                  ejecuta todas las pruebas
     ├── dsl/                         pruebas del lenguaje
+    ├── analisis/                    pruebas del modelo intermedio
     ├── referencia/                  salidas del sistema viejo
     └── factibles/                   horarios sin incumplimientos duros
 ```
@@ -56,13 +58,34 @@ problemas_de_asignacion/
 | Que cada restricción exista y no se repita | `src/dsl/problema.lisp` | `resolver-restricciones` |
 | La foto de entidades, slots e instancias | `src/dsl/problema.lisp` | `foto-de`, clase `problema` |
 | Cargar un dominio en su paquete | `src/orquestacion/cargar.lisp` | `cargar-dominio`, `cargar-flujo` |
+| Convertir un problema en su modelo | `src/analisis/construir.lisp` | `construir-modelo` |
+| Las clases del modelo | `src/analisis/modelo.lisp` | `modelo`, `aviso`, `restriccion-m`, `consulta-m` y sus subclases |
+| Qué contiene cada nodo | `src/analisis/recorrido.lisp` | `hijos`, `recorrer` |
+| Buscar nodos dentro de otro | `src/analisis/recorrido.lisp` | `nodos-de`, `aplanar` |
+| Unir `:itera-sobre` y `:pares` | `src/analisis/tipos.lisp` | `iteradores-de` |
+| A qué apunta un slot, y el rechazo de `nil` | `src/analisis/tipos.lisp` | `tipos-de-slots`, `tipo-de-valor` |
+| El dominio de un parámetro | `src/analisis/tipos.lisp` | `dominios-de-parametros` |
+| Las comparaciones sin sentido | `src/analisis/tipos.lisp` | `tipo-de` |
+| Lógica en restricciones, número en objetivos | `src/analisis/tipos.lisp` | `tipo-exigido`, `exigir-tipos` |
+| Si una ruta es decisión o dato | `src/analisis/atomos.lisp` | `decision-de`, `slot-de-decision` |
+| Qué decisiones toca algo | `src/analisis/atomos.lisp` | `decisiones-de` |
+| El papel de cada comparación de una pareja | `src/analisis/atomos.lisp` | `papel-de` |
+| Si una condición es simétrica | `src/analisis/simetria.lisp` | `simetrica-p`, `canonica` |
+| La celda y la clave de una pareja | `src/analisis/familias.lisp` | `datos-de-pareja` |
+| A qué familia pertenece una consulta | `src/analisis/familias.lisp` | `clase-de-consulta`, `clasificar-consulta` |
+| Cuándo se incumple una restricción | `src/analisis/normalizar.lisp` | `incumplimiento-de`, `negado`, `simplificar-incumplimiento` |
+| Si es prohibición, cota, minimax o genérica | `src/analisis/normalizar.lisp` | `forma-de`, `normalizar-restriccion` |
+| A qué entidades apunta cada una | `src/analisis/orden.lisp` | `referencias` |
+| El orden de las entidades, y los ciclos | `src/analisis/orden.lisp` | `orden-topologico` |
+| Los avisos | `src/analisis/construir.lisp` | `avisos-de-simetria`, `avisos-de-variables`, `avisos-de-restriccion` |
+| Los dominios del modelo | `src/analisis/construir.lisp` | `dominios-usados` |
 
 ## Sistema
 
 | Archivo | Qué hace |
 |---|---|
 | `problemas_de_asignacion.asd` | Dice qué archivos forman el sistema, en qué orden se cargan y que están en UTF-8. |
-| `src/paquetes.lisp` | Define `dsl`, con las 27 palabras que ve un dominio; `dsl-ast`, con la implementación y lo que leen las capas siguientes; y `orquestacion`, con el cargador. |
+| `src/paquetes.lisp` | Define `dsl`, con las 27 palabras que ve un dominio; `dsl-ast`, con la implementación y lo que leen las capas siguientes; `analisis`, con el modelo; y `orquestacion`, con el cargador. |
 
 ## Lenguaje: `src/dsl/`
 
@@ -75,6 +98,22 @@ problemas_de_asignacion/
 | `consultas.lisp` | Valida y define las consultas y las condiciones. Una consulta crea su nodo una vez y define una función que, al llamarla, comprueba su uso y devuelve un nodo de aplicación. |
 | `restricciones.lisp` | Define los seis cuantificadores sobre una sola función de expansión. Cada uno dice qué claves admite: las duras, `:para`; las blandas y los objetivos, `:para` y `:peso`. |
 | `problema.lisp` | Define la clase `problema`, valida la combinación y las restricciones, y copia los registros en el orden escrito. |
+
+## Análisis: `src/analisis/`
+
+`construir-modelo` recibe un `problema` y devuelve un modelo inmutable, que leerán los destinos. No genera nada ni lee los registros globales.
+
+| Archivo | Qué hace |
+|---|---|
+| `recorrido.lisp` | Define `hijos`, con un método por clase de nodo y ninguno sobre `t`, y lo que recorre el árbol sobre él. |
+| `modelo.lisp` | Declara las clases, sin lógica. Las formas de una restricción son `prohibicion`, `cota`, `minimax` y `restriccion-generica`. Las familias de una consulta son `choque-por-parejas`, `relacion-ordenada`, `filtro-de-fila`, `cruce-contra-tabla`, `agrupacion` y `consulta-generica`. |
+| `tipos.lisp` | Une los iteradores, deduce el tipo de cada slot y el dominio de cada parámetro, y calcula el tipo de cada expresión. Rechaza `nil`, los slots mezclados, los slots inexistentes y las comparaciones sin sentido. |
+| `atomos.lisp` | Saca la ruta y la raíz de un acceso, decide si es decisión o dato, y da su papel a cada comparación de una pareja: celda, clave, distinto, adyacente, no adyacente, orden, filtro, enlace o papeles. |
+| `simetria.lisp` | Convierte una condición en una forma comparable y dice si intercambiar las dos filas la cambia, después de aplicar sus propias igualdades. |
+| `familias.lisp` | Reconoce la familia de una consulta por su estructura y crea su objeto. Lo que no encaja queda en `consulta-generica`. |
+| `normalizar.lisp` | Pone la consulta a la izquierda, calcula cuándo se incumple la restricción y crea su objeto, enlazado con sus consultas. |
+| `orden.lisp` | Calcula a qué entidades apunta cada una y las ordena. Un ciclo es un error. |
+| `construir.lisp` | Une todo: tipos, consultas, restricciones, orden, dominios y los cuatro avisos. |
 
 ## Carga: `src/orquestacion/`
 
@@ -98,7 +137,7 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 
 | Archivo | Qué hace |
 |---|---|
-| `correr.lisp` | Compila el sistema y ejecuta las pruebas de `dsl/`. Una prueba que falla termina el proceso con código 1. |
+| `correr.lisp` | Compila el sistema y ejecuta las pruebas de `dsl/` y `analisis/`. Una prueba que falla termina el proceso con código 1. |
 | `dsl/utiles.lisp` | Dominio base de las pruebas, y los ayudantes `carga` y `rechaza`. `carga` falla ante cualquier aviso. |
 | `dsl/validacion.lisp` | Prueba la lectura de claves y la comprobación de nombres. |
 | `dsl/nodos.lisp` | Prueba los nodos, la jerarquía de dureza, el tamaño del vocabulario, y que no queden accesores de nodos ni nodos borrados. |
@@ -108,6 +147,15 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 | `dsl/problema.lisp` | Prueba `def-problema`, el orden escrito y la foto, con sus rechazos. |
 | `dsl/migracion.lisp` | Lee cada dominio viejo sin evaluarlo, calcula cómo debería quedar y exige que el nuevo sea igual, forma por forma. También compara las instancias cargadas y comprueba que `jornada` era todo profesor × día con tope 5. |
 | `dsl/archivo/dominio.lisp` | Dominio mínimo para probar la carga desde un archivo en UTF-8. |
+| `analisis/utiles.lisp` | Dominio base de las pruebas, sus ayudantes y lo que se espera de cada una de las 26 restricciones. |
+| `analisis/recorrido.lisp` | Prueba que toda clase del AST tenga un método de `hijos`, y el recorrido. |
+| `analisis/tipos.lisp` | Prueba los tipos, los dominios de los parámetros y cada rechazo. |
+| `analisis/atomos.lisp` | Prueba decisión o dato, y cada papel. |
+| `analisis/simetria.lisp` | Prueba que los 10 choques sean simétricos y las 3 relaciones ordenadas no, y los casos límite. |
+| `analisis/familias.lisp` | Prueba la familia de las 26 consultas, la celda de los 10 choques y lo que queda en `consulta-generica`. |
+| `analisis/normalizar.lisp` | Prueba las formas equivalentes, las cotas, lo genérico y la forma de las 26 restricciones. |
+| `analisis/orden.lisp` | Prueba el orden contra la prosa de referencia, las referencias y los ciclos. |
+| `analisis/modelo.lisp` | Prueba `construir-modelo` en los cinco dominios: consultas derivadas, dominios, avisos y pureza. También que no se lean registros globales, que no haya `case` y que no aparezcan nombres de un dominio. |
 | `referencia/<dominio>/` | Lo que produjo el sistema viejo: `dominio.lisp`, `horario.py`, `descripcion.md` y, en tesis, tv y SEDER, `modelo.txt` y `valores.json`. |
 | `referencia/sistema_viejo.py` | Abre un `horario.py` viejo sin ejecutar el genético, y evalúa sus restricciones sobre un horario. |
 | `referencia/capturar.py` | Escribe `modelo.txt` y `valores.json` de cada dominio. |
@@ -121,7 +169,7 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 |---|---|
 | `README.md` | Portada: mapa de capas, cómo correr las pruebas y cómo cargar un dominio. |
 | `decisiones-reimplementacion.md` | Cada decisión tomada, con su motivo, y lo pendiente a implementar. |
-| `plan-etapa-1.md` | Cómo se construyó el DSL, fase por fase, con la tabla de rechazos y los cambios por dominio. |
+| `plan-etapa-2.md` | Cómo se construyó el análisis, fase por fase, con lo esperado de cada dominio y las tablas de rechazos y avisos. |
 | `../plan-reimplementacion.md` | El plan general de las cinco capas. |
 | `../deficiencias-por-capa.md` | El inventario de lo que se quiere corregir. |
 | `../BASE-CONOCIMIENTO-tesis.md` | La base de conocimiento de la tesis. |

@@ -29,6 +29,29 @@
            #:operacion-aritmetica #:comprobacion-aritmetica
            #:operacion-logica-binaria #:operacion-logica-unaria))
 
+(defpackage :analisis
+  (:use :cl :dsl :dsl-ast)
+  (:export #:construir-modelo
+           #:hijos #:recorrer #:nodos-de #:aplanar #:camino
+           #:modelo #:modelo-problema #:modelo-restricciones #:modelo-consultas #:modelo-tipos
+           #:modelo-referencias #:modelo-orden #:modelo-dominios #:modelo-avisos
+           #:aviso #:aviso-motivo #:aviso-objeto #:aviso-mensaje
+           #:restriccion-m #:restriccion-nombre #:restriccion-nodo #:restriccion-peso
+           #:restriccion-variables #:restriccion-decisiones #:restriccion-consultas
+           #:restriccion-medida
+           #:prohibicion #:minimax #:restriccion-generica
+           #:cota #:cota-comparador #:cota-umbral #:cota-incumplimiento
+           #:consulta-m #:consulta-nombre #:consulta-nodo #:consulta-parametros
+           #:consulta-iteradores #:consulta-condicion #:consulta-operacion #:consulta-decisiones
+           #:pareja #:pareja-celda #:pareja-clave #:pareja-enlaces #:pareja-distintos
+           #:pareja-filtros #:pareja-papeles
+           #:choque-por-parejas
+           #:relacion-ordenada #:relacion-adyacentes #:relacion-no-adyacentes
+           #:filtro-de-fila
+           #:cruce-contra-tabla #:cruce-tabla #:cruce-dimensiones
+           #:agrupacion #:agrupacion-dimensiones
+           #:consulta-generica))
+
 (defpackage :orquestacion
   (:use :cl :dsl-ast)
   (:export #:cargar-dominio #:cargar-flujo))

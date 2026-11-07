@@ -10,12 +10,24 @@ Reimplementación por capas del DSL de problemas de asignación con restriccione
 | Capa | Carpeta | Qué hace | Estado |
 |---|---|---|---|
 | 1. DSL | `src/dsl/` | el lenguaje que escribe el usuario | **completada** |
-| 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends | pendiente |
+| 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends | **completada** |
 | 3. Emisión | `src/emision/` | un destino por lenguaje: Python, notación matemática, español | pendiente |
 | 4. Estrategias | `src/estrategias/` | cómo se busca la solución | pendiente |
 | 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde | pendiente |
 
 Las carpetas se crean en la etapa que las llena.
+
+## Etapa 2: el análisis
+
+`construir-modelo` convierte un problema en el modelo que leerán los destinos: la forma de cada restricción, la familia de cada consulta, sus decisiones, el orden de las entidades y los avisos.
+
+```lisp
+(analisis:construir-modelo (orquestacion:cargar-dominio "dominios/tv/dominio.lisp"))
+```
+
+Lo que no tiene sentido, como comparar un día con un número, se rechaza con `error-dsl`. Lo dudoso queda en `modelo-avisos`. Todavía nadie llama al análisis al cargar un dominio ni muestra los avisos: eso llega en la etapa 5.
+
+La implementación está en [`plan-etapa-2.md`](plan-etapa-2.md).
 
 ## Etapa 1: el DSL
 
@@ -36,7 +48,7 @@ Para cargar un dominio desde Lisp:
 
 `cargar-dominio` crea el paquete `DOMINIO-TV` y devuelve el objeto `problema`. Lo que todavía no se genera es la salida: Python, notación matemática y español llegan en la etapa 3.
 
-Las decisiones están en [`decisiones-reimplementacion.md`](decisiones-reimplementacion.md), y la implementación de esta etapa en [`plan-etapa-1.md`](plan-etapa-1.md).
+Las decisiones están en [`decisiones-reimplementacion.md`](decisiones-reimplementacion.md), y la lógica de cada archivo en [`estructura.md`](estructura.md).
 
 ## Etapa 0: la referencia
 

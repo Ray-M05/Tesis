@@ -53,10 +53,9 @@ Cambia de formato por completo: deja de ser texto impreso por el Python (3.3). C
 | Dominio | Hoy | Debe quedar |
 |---|---|---|
 | Saúl | R9: `(sesiones_del_plan(h, pl) = frecuencia(?))` | cuantificador explícito y entidad nombrada: «∀ pl ∈ PLAN: sesiones_del_plan(h, pl) = frecuencia(pl)» |
-| Saúl | R11: `(sesiones_de_la_jornada(h, jornada) ≤ tope(?))` | lo mismo, sobre JORNADA |
+| Saúl | R11: `(sesiones_de_la_jornada(h, jornada) ≤ tope(?))` | «∀ p ∈ PROFESOR, ∀ d ∈ DIA: sesiones_del_dia(h, p, d) ≤ 5» (D1.5) |
 | Saúl | R10: `(primeros_turnos_de_lejanos(h) > 0)`, la condición prohibida | la restricción: `primeros_turnos_de_lejanos(h) = 0`, igual que un `nppq` |
 | Saúl | R9 y R11 sin «donde» | cada restricción con la definición de sus consultas (2.5) |
-| docentes | `frecuencia(?)` en la restricción de frecuencia, si se incluye (D1.7) | la entidad nombrada |
 | docentes | `dias_de_profesor(h, prof) = \|{ fecha(c) : … }\|` | el atributo real, `dia(c)` (3.7) |
 | SEDER | la letra `I` nombra a la vez instalación e indisponibilidad, y `T` y `I` aparecen dos veces | un símbolo distinto por conjunto (3.4) |
 | todos | encabezado «tdpq / sbqp / minimizar» | `ndpq`; la errata desaparece con el emisor nuevo |
@@ -78,6 +77,12 @@ Los modelos de docentes y Saúl no se capturaron ejecutando (D0.6). Sus filas de
 | SEDER | 2527 |
 
 La única excepción aceptable es una que cambie el significado por una decisión tomada. Por ejemplo, si una consulta de choque pasa a `:pares` y el verbalizador ya no necesita callar la cláusula del orden del par. Cada excepción se anota aquí con su motivo antes de aceptarla.
+
+Excepciones aceptadas:
+
+| Dominio | Líneas | Motivo |
+|---|---|---|
+| Saúl | 25 («Una jornada tiene…»), 51 («Hay 130 jornadas.») y 103 (restricción tope diario de profesor) | `jornada` se elimina al cuantificar sobre profesor y día (D1.5). Las dos primeras desaparecen; el texto de la tercera se fija en la etapa 3. El número de caracteres de Saúl deja de ser 4313. |
 
 ---
 
