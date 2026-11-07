@@ -7,7 +7,7 @@
 ;; MIXINS
 ;; =====================================================================
 
-(defclass* tiene-nombre ()
+(def-mixin tiene-nombre ()
   (nombre))
 
 
@@ -63,7 +63,7 @@
   :itera-sobre (p profesor)
   :pares (c1 c2) clase
   :comprueba
-  (op-and (op-igual    (profesor (sesion c1)) p)
+  (op-y (op-igual    (profesor (sesion c1)) p)
           (op-igual    (profesor (sesion c2)) p)
           (op-igual    (dia   c1) (dia   c2))
           (op-igual    (turno c1) (turno c2))
@@ -78,7 +78,7 @@
 (def-consulta colisiones-de-aula ()
   :pares (c1 c2) clase
   :comprueba
-  (op-and (op-igual    (aula  c1) (aula  c2))
+  (op-y (op-igual    (aula  c1) (aula  c2))
           (op-igual    (dia   c1) (dia   c2))
           (op-igual    (turno c1) (turno c2))
           (op-distinto (grupo (sesion c1)) (grupo (sesion c2))))
@@ -92,7 +92,7 @@
 (def-consulta colisiones-de-grupo ()
   :pares (c1 c2) clase
   :comprueba
-  (op-and (op-igual    (grupo (sesion c1)) (grupo (sesion c2)))
+  (op-y (op-igual    (grupo (sesion c1)) (grupo (sesion c2)))
           (op-igual    (dia   c1) (dia   c2))
           (op-igual    (turno c1) (turno c2))
           (op-distinto (aula  c1) (aula  c2)))

@@ -27,5 +27,29 @@
                    (:file "normalizar")
                    (:file "orden")
                    (:file "construir")))
+     (:module "emision"
+      :serial t
+      :components ((:file "destinos")
+                   (:file "generar-codigo")
+                   (:file "nombres")
+                   (:module "python"
+                    :serial t
+                    :components ((:file "expresiones")
+                                 (:file "datos")
+                                 (:file "consultas")
+                                 (:file "restricciones")
+                                 (:file "resultado")))
+                   (:module "matematica"
+                    :serial t
+                    :components ((:file "expresiones")
+                                 (:file "modelo")))
+                   (:module "verbalizador"
+                    :serial t
+                    :components ((:file "lexico")
+                                 (:file "expresiones")
+                                 (:file "familias")
+                                 (:file "documento")))))
      (:module "orquestacion"
-      :components ((:file "cargar")))))))
+      :serial t
+      :components ((:file "cargar")
+                   (:file "exportar")))))))

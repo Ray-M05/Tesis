@@ -7,7 +7,7 @@
   :operacion (suma 1))
 (def-consulta sesiones-del-dia (p d)
   :itera-sobre (f fila)
-  :comprueba (op-and (op-igual (profesor (sesion f)) p) (op-igual (dia f) d))
+  :comprueba (op-y (op-igual (profesor (sesion f)) p) (op-igual (dia f) d))
   :operacion (suma 1))
 (def-nppq r-nppq (op-mayor (choques) 0))
 (def-tqpq r-tqpq (op-igual (sesiones-del-dia p d) 1) :para (p profesor) (d dia))

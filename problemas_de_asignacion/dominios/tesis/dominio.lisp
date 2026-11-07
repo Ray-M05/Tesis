@@ -6,7 +6,7 @@
 ;; MIXINS
 ;; =====================================================================
 
-(defclass* tiene-nombre ()
+(def-mixin tiene-nombre ()
   (nombre))
 
 
@@ -46,7 +46,7 @@
 
 ;; Auxiliar: ¿está el profesor prof en el tribunal de la asignación asig?
 (def-condicion profesor-en-tribunal (prof asig)
-  (op-or (op-igual (tutor      (tribunal asig)) prof)
+  (op-o (op-igual (tutor      (tribunal asig)) prof)
              (op-igual (oponente   (tribunal asig)) prof)
              (op-igual (presidente (tribunal asig)) prof)
              (op-igual (vocal      (tribunal asig)) prof)
@@ -58,7 +58,7 @@
   :itera-sobre (p profesor)
   :pares (a1 a2) asignacion
   :comprueba
-  (op-and (profesor-en-tribunal p a1)
+  (op-y (profesor-en-tribunal p a1)
               (profesor-en-tribunal p a2)
               (op-igual    (fecha    a1) (fecha    a2))
               (op-igual    (momento  a1) (momento  a2))
@@ -74,7 +74,7 @@
 (def-consulta colisiones-de-local ()
   :pares (a1 a2) asignacion
   :comprueba
-  (op-and (op-igual    (local   a1) (local   a2))
+  (op-y (op-igual    (local   a1) (local   a2))
           (op-igual    (fecha   a1) (fecha   a2))
           (op-igual    (momento a1) (momento a2))
           (op-distinto (tribunal a1) (tribunal a2)))

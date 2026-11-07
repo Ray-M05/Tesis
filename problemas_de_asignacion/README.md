@@ -11,11 +11,48 @@ Reimplementación por capas del DSL de problemas de asignación con restriccione
 |---|---|---|---|
 | 1. DSL | `src/dsl/` | el lenguaje que escribe el usuario | **completada** |
 | 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends | **completada** |
-| 3. Emisión | `src/emision/` | un destino por lenguaje: Python, notación matemática, español | pendiente |
+| 3. Emisión | `src/emision/` | un destino por lenguaje: Python, LaTeX y prosa en español | **completada** |
 | 4. Estrategias | `src/estrategias/` | cómo se busca la solución | pendiente |
 | 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde | pendiente |
 
 Las carpetas se crean en la etapa que las llena.
+
+## Etapa 3: la emisión
+
+Genera los tres archivos de cada dominio, incluida la prosa del verbalizador. Se ejecuta desde `problemas_de_asignacion/`:
+
+```bash
+sbcl --script generar.lisp
+```
+
+Para generar solo algunos dominios, se nombran:
+
+```bash
+sbcl --script generar.lisp saul tesis
+```
+
+Los dominios son `tv`, `tesis`, `docentes`, `seder` y `saul`. La salida queda en `salida/<dominio>/`, que git ignora, y cada ejecución sobrescribe la anterior:
+
+| Archivo | Qué es | Sale de |
+|---|---|---|
+| `modelo.py` | Datos, consultas, restricciones y `evaluar`, sin búsqueda | `src/emision/python/` |
+| `modelo.tex` | El modelo matemático, para `\input` en un documento con `amsmath` | `src/emision/matematica/` |
+| `descripcion.md` | La descripción en español, del verbalizador | `src/emision/verbalizador/` |
+
+Para revisar la prosa, abre `salida/<dominio>/descripcion.md`. La referencia con la que se compara es `pruebas/referencia/<dominio>/descripcion.md`, y las diferencias previstas están en [`diferencias-esperadas.md`](pruebas/referencia/diferencias-esperadas.md).
+
+Desde Lisp, lo mismo para un dominio:
+
+```lisp
+(let ((ruta "dominios/saul/dominio.lisp"))
+  (orquestacion:exportar (analisis:construir-modelo (orquestacion:cargar-dominio ruta))
+                         "salida/saul/"
+                         (orquestacion:cargar-anotaciones ruta)))
+```
+
+Las pruebas ejecutan el Python generado, así que hace falta `python` en el `PATH`. El LaTeX se compila si hay `pdflatex`, en el `PATH` o en la variable `PDFLATEX`; si no, se avisa y no falla.
+
+La implementación está en [`plan-etapa-3.md`](plan-etapa-3.md).
 
 ## Etapa 2: el análisis
 
@@ -46,7 +83,7 @@ Para cargar un dominio desde Lisp:
 (orquestacion:cargar-dominio "dominios/tv/dominio.lisp")
 ```
 
-`cargar-dominio` crea el paquete `DOMINIO-TV` y devuelve el objeto `problema`. Lo que todavía no se genera es la salida: Python, notación matemática y español llegan en la etapa 3.
+`cargar-dominio` crea el paquete `DOMINIO-TV` y devuelve el objeto `problema`. La salida se genera con `exportar`, descrito en la etapa 3.
 
 Las decisiones están en [`decisiones-reimplementacion.md`](decisiones-reimplementacion.md), y la lógica de cada archivo en [`estructura.md`](estructura.md).
 
@@ -64,7 +101,7 @@ Las decisiones están en [`decisiones-reimplementacion.md`](decisiones-reimpleme
 
 `pruebas/factibles/<dominio>.json` guarda un horario sin incumplimientos duros por dominio: tesis, tv y SEDER.
 
-Docentes y Saúl no se ejecutan (decisión D0.6): de ellos solo se copian los artefactos.
+Docentes y Saúl se capturan sin ejecutar el genético (D3.8), y no tienen horario factible.
 
 Lo que la reimplementación cambia a propósito está en [`pruebas/referencia/diferencias-esperadas.md`](pruebas/referencia/diferencias-esperadas.md). Cualquier otra diferencia es un error.
 
@@ -86,4 +123,4 @@ cd pruebas/factibles && python buscar.py tesis tv seder
 | D0.3 | Los documentos de la tesis se colocan a mano; el plan no los mueve. |
 | D0.4 | Variables, funciones y carpetas en español. |
 | D0.5 | Archivos en UTF-8 sin BOM. |
-| D0.6 | Docentes y Saúl no se ejecutan para la referencia. |
+| D0.6 | Docentes y Saúl no se ejecutan para la referencia. Revisada en D3.8: evaluar era barato, y se capturan sus valores. |

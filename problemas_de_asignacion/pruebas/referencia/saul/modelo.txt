@@ -1,0 +1,79 @@
+============================================================
+MODELO DE OPTIMIZACION
+============================================================
+
+INDICES Y CONJUNTOS:
+  S  =  conjunto de sesions      (|S| = 297)
+  D  =  conjunto de dia disponibles   (|D| = 5)
+  T  =  conjunto de turno disponibles   (|T| = 7)
+  P  =  conjunto de profesor   (|P| = 26)
+  A  =  conjunto de ausencia   (|A| = 6)
+  J  =  conjunto de jornada   (|J| = 130)
+  P  =  conjunto de plan   (|P| = 102)
+
+VARIABLES DE DECISION:
+  Para cada sesion t ∈ S se asigna:
+    dia_t ∈ D   (dia)
+    turno_t ∈ T   (turno)
+
+FUNCION OBJETIVO:
+  minimizar z(h) donde:
+    z(h) = 1000 · Σ_i incumpl_i(h)   [duras]
+         + 1 · Σ_j incumpl_j(h)   [blandas]
+
+RESTRICCIONES DURAS  (nppq / tqpq):
+  R1  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    colisiones_de_grupo(h) = 0
+    donde:
+      colisiones_de_grupo(h) = Σ_{u1∈UBICACION, u2∈UBICACION}  [((grupo(plan(sesion(u1))) = grupo(plan(sesion(u2)))) ∧ (dia(u1) = dia(u2)) ∧ (turno(u1) = turno(u2)) ∧ (sesion(u1) ≠ sesion(u2)))]
+
+  R2  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    colisiones_de_profesor(h) = 0
+    donde:
+      colisiones_de_profesor(h) = Σ_{p∈PROFESOR, u1∈UBICACION, u2∈UBICACION}  [((profesor(plan(sesion(u1))) = p) ∧ (profesor(plan(sesion(u2))) = p) ∧ (dia(u1) = dia(u2)) ∧ (turno(u1) = turno(u2)) ∧ (sesion(u1) ≠ sesion(u2)))]
+
+  R3  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    repeticiones_en_el_dia(h) = 0
+    donde:
+      repeticiones_en_el_dia(h) = Σ_{u1∈UBICACION, u2∈UBICACION}  [((plan(sesion(u1)) = plan(sesion(u2))) ∧ (dia(u1) = dia(u2)) ∧ (admite_doble(plan(sesion(u1))) = 0) ∧ (sesion(u1) ≠ sesion(u2)))]
+
+  R4  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    dobles_no_consecutivos(h) = 0
+    donde:
+      dobles_no_consecutivos(h) = Σ_{u1∈UBICACION, u2∈UBICACION}  [((plan(sesion(u1)) = plan(sesion(u2))) ∧ (dia(u1) = dia(u2)) ∧ (admite_doble(plan(sesion(u1))) = 1) ∧ (orden(turno(u2)) > orden(turno(u1))) ∧ (orden(turno(u2)) ≠ (orden(turno(u1)) + 1)))]
+
+  R5  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    sesiones_en_dia_de_preparacion(h) = 0
+    donde:
+      sesiones_en_dia_de_preparacion(h) = Σ_{u∈UBICACION}  [(dia(u) = dia_preparacion(asignatura(plan(sesion(u)))))]
+
+  R6  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    educacion_fisica_fuera_de_horario(h) = 0
+    donde:
+      educacion_fisica_fuera_de_horario(h) = Σ_{u∈UBICACION}  [((educacion_fisica(asignatura(plan(sesion(u)))) = 1) ∧ (orden(turno(u)) > 3))]
+
+  R7  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    sesiones_de_tarde_no_autorizadas(h) = 0
+    donde:
+      sesiones_de_tarde_no_autorizadas(h) = Σ_{u∈UBICACION}  [((admite_tarde(plan(sesion(u))) = 0) ∧ (orden(turno(u)) > 5))]
+
+  R8  [SIMPLE / DURA  (nppq) — No Puede Pasar Que]:
+    sesiones_en_dia_sin_asistencia(h) = 0
+    donde:
+      sesiones_en_dia_sin_asistencia(h) = Σ_{u∈UBICACION, a∈AUSENCIA}  [((profesor(plan(sesion(u))) = profesor(a)) ∧ (dia(u) = dia(a)))]
+
+  R9  [SIMPLE / DURA  (tqpq) — Tiene Que Pasar Que]:
+    (sesiones_del_plan(h, pl) = frecuencia(?))
+
+
+RESTRICCIONES BLANDAS  (tdpq / sbqp / minimizar):
+  R10  [DEBIL  / BLANDA (ndpq) — No Debe Pasar Que]:
+    (primeros_turnos_de_lejanos(h) > 0)
+    donde:
+      primeros_turnos_de_lejanos(h) = Σ_{u∈UBICACION}  [((vive_lejos(profesor(plan(sesion(u)))) = 1) ∧ (orden(turno(u)) = 1))]
+
+  R11  [DEBIL  / BLANDA (sbqp) — Solo Bien Para Que]:
+    (sesiones_de_la_jornada(h, jornada) ≤ tope(?))
+
+
+============================================================

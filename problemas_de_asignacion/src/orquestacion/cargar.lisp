@@ -15,3 +15,17 @@
   "Carga el dominio de RUTA; su nombre es el de la carpeta que lo contiene."
   (with-open-file (flujo ruta :external-format :utf-8)
     (cargar-flujo flujo (first (last (pathname-directory ruta))))))
+
+(defun cargar-anotaciones (ruta)
+  "Lee las anotaciones del verbalizador junto al dominio de RUTA. Son datos, y son opcionales."
+  (let ((archivo (merge-pathnames "verbalizador.lisp" ruta)))
+    (when (probe-file archivo)
+      (with-open-file (flujo archivo :external-format :utf-8)
+        (let* ((*read-eval* nil)
+               (anotaciones (read flujo))
+               (predicados (getf anotaciones :predicados)))
+          (unless (every (lambda (predicado)
+                           (and (= (length predicado) 2) (every #'stringp predicado)))
+                         predicados)
+            (rechazar "~a: :predicados tiene que ser una lista de (slot frase)" archivo))
+          anotaciones)))))

@@ -1,0 +1,5 @@
+(:predicados (("admite-doble" "admite turno doble")
+              ("admite-tarde" "admite turnos de tarde")
+              ("vive-lejos" "vive lejos del centro")
+              ("es-contratado" "es contratado")
+              ("educacion-fisica" "es educación física")))

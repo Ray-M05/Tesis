@@ -1,6 +1,6 @@
 # Decisiones de la reimplementación
 
-Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están en [`plan-reimplementacion.md`](../plan-reimplementacion.md). La implementación de la capa de análisis está en [`plan-etapa-2.md`](plan-etapa-2.md).
+Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están en [`plan-reimplementacion.md`](../plan-reimplementacion.md). La implementación de la capa de análisis está en [`plan-etapa-2.md`](plan-etapa-2.md), la de la emisión en [`plan-etapa-3.md`](plan-etapa-3.md) y la de las estrategias en [`plan-etapa-4.md`](plan-etapa-4.md).
 
 ## Proyecto
 
@@ -58,7 +58,7 @@ Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están e
 | Qué se exige a los componentes de la combinación | Que sean exactamente la identidad más las variables. Los cinco dominios ya lo cumplen. |
 | Si se aceptan dominios vacíos | No en la identidad ni en las variables: fallarían mucho más tarde. |
 | Qué orden conserva el problema | El escrito, en entidades, instancias y restricciones: los horarios de referencia son posiciones, y la prosa sigue ese orden. |
-| Dónde viven las anotaciones de un destino | En un archivo por destino, como `dominios/saul/espanol.lisp`: el dominio queda neutral. Se mueven en la etapa 3. |
+| Dónde viven las anotaciones de un destino | En un archivo por destino, como `dominios/saul/verbalizador.lisp`: el dominio queda neutral. Se mueven en la etapa 3. |
 
 ## Paquetes, carga y errores
 
@@ -130,7 +130,22 @@ Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están e
 | Qué dice la prosa de `contar-distintos` | Lo que sale del slot contado: «fechas distintas» en tesis y «días distintos» en docentes. Cambian dos líneas de la prosa de tesis. |
 | Cómo se escribe el tope en la prosa | «El número de ubicaciones de cada profesor y cada día no puede superar 5.»: sale de `:para` con cualquier número de variables. |
 | En qué idioma van los identificadores | En español, también lo que se migre del verbalizador. Solo queda en inglés lo que pertenece a Common Lisp, a Python o a LaTeX. |
-| En qué orden se implementa la emisión | Fases grandes: destinos, Python y su comparación, matemática y español. Lo que da valores se valida primero. |
+| En qué orden se implementa la emisión | Fases grandes: destinos, Python y su comparación, matemática, español y, al final, traducir lo que queda en inglés. Lo que da valores se valida primero, y un cambio de nombres no se mezcla con lógica nueva. |
+| Qué se traduce de lo ya implementado | Todo, salvo las copias congeladas de `pruebas/referencia/`: `op-and`, `op-or` y `op-not` son `op-y`, `op-o` y `op-no`; `defclass*` es `def-mixin`; `args` es `parametros`; y la abreviatura `nl` es `prosa`. Quedan `slot` y `mixin`, que son términos de CLOS. |
+| Forma del Python generado | Un `modelo.py` con datos, consultas, restricciones y `evaluar`, y un archivo por estrategia que lo importa. Varias estrategias usan el mismo modelo sin regenerarlo. Esta etapa solo genera `modelo.py`. |
+| Qué se hace con MGA | Nada por ahora: `gcode` y la sangría de MGA quedan para una etapa extra del plan. Los métodos se escriben con `defmethod`, y añadirlos después no cambia la salida. |
+| Cómo se llama el destino de la prosa | `verbalizador`, su nombre original, en la carpeta, en la clase y en las anotaciones de cada dominio. |
+| Cómo se lleva la sangría | Un slot de nivel y la macro `con-sangria`. Es más simple, y la salida es la misma. Se puede pasar al mecanismo de MGA más adelante. |
+| Dónde vive lo que la prosa sabe del español | La morfología y las palabras del idioma, en `src/`, con claves de texto. Lo propio de un dominio, en `dominios/<d>/verbalizador.lisp`. Hoy solo Saúl lo necesita, para sus predicados. |
+| Cómo se migra el verbalizador | Se traslada a su sitio sin cambiar su lógica ni arreglar nada. Si aparece un error real, se informa al autor, que decide. Cuatro puntos ya vistos se analizan al terminar la implementación, y se corrigen si afectan directamente. |
+| Si la prosa tiene que ser idéntica a la referencia | No. Compararla es un informe: las diferencias se muestran para decidir, y la prueba no falla por ellas. |
+| Qué contiene el modelo matemático | Conjuntos, decisiones, objetivo y restricciones, como la salida que sustituye. |
+| Cómo se escriben las decisiones en la matemática | Como funciones, `fecha(a) ∈ FECHA`. Las binarias son del ILP y obligarían a reescribir cada restricción. |
+| Qué es la función objetivo | Las duras van como «sujeto a» y el objetivo solo suma las blandas con su peso. La penalización es de la estrategia, no del problema. |
+| Qué aspecto tiene una restricción blanda | Su requisito y su término de costo, para que el modelo diga cuánto vale incumplirla. |
+| Cómo se nombran los conjuntos | Por el nombre de la entidad, `PROFESOR`: es único sin reglas, y las letras chocaban en el SEDER. |
+| Cómo se escribe una consulta en la matemática | Nodo por nodo, con Σ y corchetes de Iverson, una línea por conjunción: dice lo que está escrito en el dominio. |
+| Qué archivo matemático se entrega | Un fragmento para `\input` en la tesis. Las pruebas lo envuelven para compilarlo. |
 
 ### Cuánto vale cada restricción
 
@@ -145,6 +160,22 @@ Decisiones ya tomadas. Las de las etapas siguientes que siguen abiertas están e
 En una cota, si se incumple, vale `|q − umbral|`, más 1 si la condición de incumplimiento incluye la igualdad. `q ≤ 5` se incumple con `q > 5`, así que `q = 7` vale 2; `q < 5` se incumple con `q ≥ 5`, así que vale 3.
 
 `evaluar` calcula todas, duras y blandas, y devuelve estos valores sin ponderar. El costo lo suma la estrategia: `penalización × Σ duras + Σ peso × blandas`. La penalización es de la estrategia, y el peso de cada blanda viene del dominio.
+
+## Estrategias
+
+| En qué consistía | Decisión y motivo |
+|---|---|
+| Si el ILP entra en esta etapa | No: tiene su propia etapa, y allí se decide si es destino, estrategia o las dos cosas. |
+| Qué estrategias se implementan | El genético y la búsqueda local. La segunda demuestra que añadir una no toca la otra. Una exhaustiva no sirve con estos tamaños. |
+| Cómo se elige el arranque de la población | Las tres vías, voraz, valores permitidos y al azar, se generan siempre, y se elige al ejecutar con `--inicio`, voraz por defecto. Voraz es un individuo voraz y el resto con valores permitidos: una población entera de voraces costaría unos 50 minutos en Saúl. |
+| Cómo se combinan duras y blandas | Suma ponderada: `penalización × duras + Σ peso × blandas`, con penalización 1000. Las blandas de un horario al azar no pasan de 18, así que una prioridad lexicográfica daría el mismo orden. |
+| Cómo es la mutación | Mueve entre 1 y k filas, con k = 2 por defecto, más un intercambio entre dos filas. En el SEDER pasa de 15 a 18 semillas de 20. |
+| Si los valores prohibidos se quitan también al mutar | No, solo al arrancar. Se midió: en el SEDER no cambia nada, y en Saúl queda en 111,5 frente a 118,7 duras con 6 semillas y rangos solapados. Con arranque voraz, 14,2 frente a 13,8. |
+| Cuándo se detiene una corrida | Con 0 duras y sin blandas, con 100 generaciones sin mejora, en el máximo de generaciones o por tiempo. Seguir tras ser factible mejora algo las blandas por poco costo. |
+| Cómo se generan los operadores | Cada operador es una clase Lisp con un método por destino que escribe su Python. Añadir uno no toca los demás, como pide 4.1. |
+| Qué se invierte en velocidad de evaluación | Solo no recalcular las restricciones que no dependen de ninguna decisión. Agrupar las relaciones y la evaluación incremental quedan como trabajo extra. |
+| Dónde se fijan la semilla y los parámetros | Valores por defecto en la clase Lisp, y argumentos al ejecutar el Python, para no regenerar en cada corrida. Sin semilla da error. `ejecuciones/` lleva un archivo Markdown que explica cada parámetro y argumento. |
+| Qué se exige para dar la etapa por cumplida | SEDER: al menos 18 de 20 semillas en 0 duras. Saúl: no se exige 0, porque no se sabe si es posible; no superar 17 duras y como mucho 1 evaluación por individuo. Al terminar se calcula en minutos cuánto costaría una corrida más grande. |
 
 ## Cómo queda cada recorrido
 

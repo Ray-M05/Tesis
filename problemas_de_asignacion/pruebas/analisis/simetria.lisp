@@ -45,10 +45,10 @@
     (simetrica-en-p p "M")))
 
 ;; El orden de los operandos y de los términos no importa.
-(assert (simetrica-texto-p "(op-and (op-igual (dia a) (dia b)) (op-igual (turno b) (turno a)))"))
+(assert (simetrica-texto-p "(op-y (op-igual (dia a) (dia b)) (op-igual (turno b) (turno a)))"))
 (assert (simetrica-texto-p "(op-distinto (sesion b) (sesion a))"))
-(assert (simetrica-texto-p "(op-and (op-mayor (orden (dia a)) 1) (op-mayor (orden (dia b)) 1))"))
-(assert (simetrica-texto-p "(op-and (op-mayor (orden (dia b)) 1) (op-mayor (orden (dia a)) 1))"))
+(assert (simetrica-texto-p "(op-y (op-mayor (orden (dia a)) 1) (op-mayor (orden (dia b)) 1))"))
+(assert (simetrica-texto-p "(op-y (op-mayor (orden (dia b)) 1) (op-mayor (orden (dia a)) 1))"))
 
 ;; Lo que depende del orden no es simétrico.
 (assert (not (simetrica-texto-p "(op-mayor (orden (dia a)) (orden (dia b)))")))
@@ -56,10 +56,10 @@
 
 ;; Un filtro sobre una sola fila solo es simétrico si otra igualdad lo traslada a la otra.
 (assert (not (simetrica-texto-p "(op-mayor (orden (dia a)) 1)")))
-(assert (simetrica-texto-p "(op-and (op-igual (dia a) (dia b)) (op-mayor (orden (dia a)) 1))"))
-(assert (not (simetrica-texto-p "(op-and (op-igual (turno a) (turno b))
+(assert (simetrica-texto-p "(op-y (op-igual (dia a) (dia b)) (op-mayor (orden (dia a)) 1))"))
+(assert (not (simetrica-texto-p "(op-y (op-igual (turno a) (turno b))
                                          (op-mayor (orden (dia a)) 1))")))
 
 ;; Dos instancias distintas no son lo mismo, y la misma sí.
-(assert (not (simetrica-texto-p "(op-and (op-igual (dia a) lunes) (op-igual (dia b) martes))")))
-(assert (simetrica-texto-p "(op-and (op-igual (dia a) lunes) (op-igual (dia b) lunes))"))
+(assert (not (simetrica-texto-p "(op-y (op-igual (dia a) lunes) (op-igual (dia b) martes))")))
+(assert (simetrica-texto-p "(op-y (op-igual (dia a) lunes) (op-igual (dia b) lunes))"))

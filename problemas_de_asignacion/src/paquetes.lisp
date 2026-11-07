@@ -1,10 +1,10 @@
 (defpackage :dsl
   (:use)
-  (:export #:def-entidad #:def-comb #:defclass*
+  (:export #:def-entidad #:def-comb #:def-mixin
            #:def-consulta #:def-condicion #:def-problema
            #:def-nppq #:def-tqpq #:def-ndpq #:def-sbqp #:def-minimizar #:def-maximizar
            #:suma #:contar-distintos
-           #:op-and #:op-or #:op-not
+           #:op-y #:op-o #:op-no
            #:op-igual #:op-distinto #:op-mayor #:op-menor #:op-mayor-igual #:op-menor-igual
            #:op-suma #:op-resta #:op-multiplicacion #:op-division))
 
@@ -17,7 +17,7 @@
            #:problema-slots #:problema-instancias
            #:nodo-ast #:ref-gen-entidad #:nombre-entidad #:ref-especifica-ent
            #:acceso-a-atributo-de-entidad #:atributo #:entidad
-           #:consulta-simple #:nombre #:args #:variable-iteracion #:dominio-iteracion
+           #:consulta-simple #:nombre #:parametros #:variable-iteracion #:dominio-iteracion
            #:variables-pares #:dominio-pares #:comprobacion #:operacion
            #:aplicacion-de-consulta #:consulta #:argumentos
            #:operacion-de-consulta #:expresion
@@ -32,7 +32,8 @@
 (defpackage :analisis
   (:use :cl :dsl :dsl-ast)
   (:export #:construir-modelo
-           #:hijos #:recorrer #:nodos-de #:aplanar #:camino
+           #:hijos #:recorrer #:nodos-de #:aplanar #:camino #:variables-usadas
+           #:negado #:duenos-de-instancias
            #:modelo #:modelo-problema #:modelo-restricciones #:modelo-consultas #:modelo-tipos
            #:modelo-referencias #:modelo-orden #:modelo-dominios #:modelo-avisos
            #:aviso #:aviso-motivo #:aviso-objeto #:aviso-mensaje
@@ -52,6 +53,13 @@
            #:agrupacion #:agrupacion-dimensiones
            #:consulta-generica))
 
+(defpackage :emision
+  (:use :cl :dsl :dsl-ast :analisis)
+  (:export #:destino #:destino-modelo #:python #:matematica #:verbalizador
+           #:generar-codigo #:simbolo #:emitir-consulta #:emitir-restriccion #:emitir
+           #:nombre-python #:clase-python #:constante-python #:slots-de-etiqueta))
+
 (defpackage :orquestacion
   (:use :cl :dsl-ast)
-  (:export #:cargar-dominio #:cargar-flujo))
+  (:import-from :emision #:emitir #:python #:matematica #:verbalizador)
+  (:export #:cargar-dominio #:cargar-flujo #:cargar-anotaciones #:exportar))

@@ -39,7 +39,7 @@
 (defun papeles-coherentes (nodo a b problema)
   "Devuelve el papel de cada átomo si todos tienen uno y sus enlaces y papeles van por parejas."
   (let ((papeles (mapcar (lambda (atomo) (papel-de atomo a b problema))
-                         (aplanar 'op-and (slot-value nodo 'comprobacion)))))
+                         (aplanar 'op-y (slot-value nodo 'comprobacion)))))
     (when (and (every #'identity papeles)
                (uno-por-fila-p (mapcar (lambda (enlace)
                                          (list (list (first enlace) (second enlace)) (third enlace)))
@@ -71,7 +71,7 @@
   (let ((enlaces (mapcar (lambda (termino)
                            (and (typep termino 'op-igual)
                                 (enlace-de termino (list fila))))
-                         (aplanar 'op-or atomo))))
+                         (aplanar 'op-o atomo))))
     (if (every #'identity enlaces)
         (mapcar (lambda (enlace) (list (first enlace) (second enlace))) enlaces)
         :no)))
@@ -79,7 +79,7 @@
 (defun clase-de-agrupacion (nodo fila)
   "Devuelve la clase y los campos de una consulta que agrupa filas por parámetros, o nil."
   (let ((dimensiones (mapcar (lambda (atomo) (dimensiones-de-atomo atomo fila))
-                             (aplanar 'op-and (slot-value nodo 'comprobacion)))))
+                             (aplanar 'op-y (slot-value nodo 'comprobacion)))))
     (unless (member :no dimensiones)
       (list 'agrupacion :dimensiones (apply #'append dimensiones)))))
 
@@ -97,7 +97,7 @@
 (defun clase-de-cruce (nodo fila otra)
   "Devuelve la clase y los campos de un cruce entre una fila y una tabla, o nil."
   (let ((dimensiones (mapcar (lambda (atomo) (dimension-de-cruce atomo fila (first otra)))
-                             (aplanar 'op-and (slot-value nodo 'comprobacion)))))
+                             (aplanar 'op-y (slot-value nodo 'comprobacion)))))
     (when (every #'identity dimensiones)
       (list 'cruce-contra-tabla
             :tabla (second otra)

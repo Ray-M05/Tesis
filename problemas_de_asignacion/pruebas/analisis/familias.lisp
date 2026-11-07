@@ -102,7 +102,7 @@
 (assert (eq (familia-de-texto "() :pares (a b) fila" "(op-igual (dia a) (dia b))")
             'choque-por-parejas))
 (assert (eq (familia-de-texto "() :itera-sobre (a fila) (b fila)"
-                              "(op-and (op-igual (dia a) (dia b)) (op-distinto (sesion a) (sesion b)))")
+                              "(op-y (op-igual (dia a) (dia b)) (op-distinto (sesion a) (sesion b)))")
             'relacion-ordenada))
 (assert (eq (familia-de-texto "() :itera-sobre (a fila) (b fila)"
                               "(op-igual (op-suma (orden (dia a)) 1) (orden (dia b)))")
@@ -120,28 +120,28 @@
 (dolist (caso '(("() :pares (a b) fila" "(op-distinto (sesion a) (sesion b))")
                 ("() :pares (a b) fila" "(op-igual (op-suma (orden (dia a)) 1) (orden (dia b)))")
                 ("() :pares (a b) fila"
-                 "(op-and (op-igual (dia a) (dia b)) (op-mayor (orden (turno a)) 1))")
+                 "(op-y (op-igual (dia a) (dia b)) (op-mayor (orden (turno a)) 1))")
                 ("() :pares (a b) fila"
-                 "(op-and (op-igual (dia a) (dia b))
+                 "(op-y (op-igual (dia a) (dia b))
                           (op-distinto (orden (turno a)) (op-suma (orden (turno b)) 1))
                           (op-distinto (orden (turno b)) (op-suma (orden (turno a)) 1)))")
                 ("() :pares (a b) fila"
-                 "(op-and (op-igual (dia a) (dia b))
+                 "(op-y (op-igual (dia a) (dia b))
                           (op-igual (orden (turno a)) (op-suma (orden (turno b)) 1))
                           (op-igual (orden (turno b)) (op-suma (orden (turno a)) 1)))")
                 ("() :pares (a b) profesor" "(op-distinto a b)")
                 ("() :itera-sobre (p profesor) (a fila) (b fila)"
-                 "(op-and (op-igual (profesor (sesion a)) p) (op-igual (dia a) (dia b)))")
+                 "(op-y (op-igual (profesor (sesion a)) p) (op-igual (dia a) (dia b)))")
                 ("() :itera-sobre (p profesor) (a fila) (b fila)"
-                 "(op-and (op-or (op-igual (profesor (sesion a)) p)
+                 "(op-y (op-o (op-igual (profesor (sesion a)) p)
                                  (op-igual (profesor (sesion a)) p))
                           (op-igual (dia a) (dia b)))")
                 ("() :pares (a b) fila"
-                 "(op-and (op-igual (dia a) (dia b)) (op-not (op-igual (turno a) (turno b))))")
+                 "(op-y (op-igual (dia a) (dia b)) (op-no (op-igual (turno a) (turno b))))")
                 ("() :itera-sobre (p profesor) :pares (a b) fila"
-                 "(op-and (op-igual (profesor (sesion a)) p) (op-igual (dia a) (dia b)))")
+                 "(op-y (op-igual (profesor (sesion a)) p) (op-igual (dia a) (dia b)))")
                 ("() :itera-sobre (p profesor) :pares (a b) fila"
-                 "(op-and (op-or (op-igual (profesor (sesion a)) p)
+                 "(op-y (op-o (op-igual (profesor (sesion a)) p)
                                  (op-igual (profesor (sesion a)) p))
                           (op-igual (dia a) (dia b)))")
                 ("() :itera-sobre (a fila) (b fila) (c fila)" "(op-igual (dia a) (dia b))")
@@ -153,11 +153,11 @@
   (assert (eq (apply #'familia-de-texto caso) 'consulta-generica) () "~a" caso))
 
 (assert (eq (familia-de-texto "(d) :itera-sobre (u fila)"
-                              "(op-and (op-igual (dia u) d) (op-mayor (orden (turno u)) 3))"
+                              "(op-y (op-igual (dia u) d) (op-mayor (orden (turno u)) 3))"
                               "(m x)" ":para (x dia)")
             'consulta-generica))
 (assert (eq (familia-de-texto "(d) :itera-sobre (u fila) (a ausencia)"
-                              "(op-and (op-igual (dia a) d) (op-igual (dia u) (dia a)))"
+                              "(op-y (op-igual (dia a) d) (op-igual (dia u) (dia a)))"
                               "(m x)" ":para (x dia)")
             'consulta-generica))
 

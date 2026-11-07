@@ -110,7 +110,7 @@
 (assert (equal (motivos (con-prohibicion
                          "(def-consulta m ()
                             :itera-sobre (a fila) (b fila)
-                            :comprueba (op-and (op-igual (dia a) (dia b))
+                            :comprueba (op-y (op-igual (dia a) (dia b))
                                                (op-distinto (sesion a) (sesion b)))
                             :operacion (suma 1))"))
                '(:simetrica-sin-pares)))

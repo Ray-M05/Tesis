@@ -1,6 +1,6 @@
 (in-package :analisis)
 
-(defstruct vista rutas a b renombrar)
+(defstruct (vista (:constructor crear-vista)) rutas a b renombrar)
 
 (defun ordenar-formas (formas)
   "Ordena formas canónicas de manera que no dependa del paquete actual."
@@ -14,7 +14,7 @@
                               (canonica (slot-value nodo 'operando-der) vista)))))
 
 (defun forma-logica (nodo vista)
-  "Devuelve la forma de un op-and u op-or, plana, ordenada y sin términos repetidos."
+  "Devuelve la forma de un op-y u op-o, plana, ordenada y sin términos repetidos."
   (cons (type-of nodo)
         (ordenar-formas
          (remove-duplicates (mapcar (lambda (termino) (canonica termino vista))
@@ -55,15 +55,15 @@
 (defmethod canonica ((nodo op-distinto) vista) (forma-conmutativa nodo vista))
 (defmethod canonica ((nodo op-suma) vista) (forma-conmutativa nodo vista))
 (defmethod canonica ((nodo op-multiplicacion) vista) (forma-conmutativa nodo vista))
-(defmethod canonica ((nodo op-and) vista) (forma-logica nodo vista))
-(defmethod canonica ((nodo op-or) vista) (forma-logica nodo vista))
+(defmethod canonica ((nodo op-y) vista) (forma-logica nodo vista))
+(defmethod canonica ((nodo op-o) vista) (forma-logica nodo vista))
 
 (defmethod canonica ((nodo operacion-unaria) vista)
   (list (type-of nodo) (canonica (slot-value nodo 'operando) vista)))
 
 (defun rutas-igualadas (condicion a b)
   "Devuelve las rutas que la conjunción iguala entre A y B."
-  (loop for atomo in (aplanar 'op-and condicion)
+  (loop for atomo in (aplanar 'op-y condicion)
         for ruta = (and (typep atomo 'op-igual)
                         (ruta-compartida (slot-value atomo 'operando-izq)
                                          (slot-value atomo 'operando-der) a b))
@@ -73,7 +73,7 @@
   "Dice si intercambiar A y B no cambia CONDICION, una vez aplicadas sus propias igualdades."
   (let ((rutas (rutas-igualadas condicion a b)))
     (flet ((forma (renombrar)
-             (canonica condicion (make-vista :rutas rutas :a a :b b :renombrar renombrar))))
+             (canonica condicion (crear-vista :rutas rutas :a a :b b :renombrar renombrar))))
       (equal (forma #'identity)
              (forma (lambda (variable)
                       (cond ((eq variable a) b)

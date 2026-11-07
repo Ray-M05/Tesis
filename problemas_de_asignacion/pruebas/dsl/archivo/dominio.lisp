@@ -1,4 +1,4 @@
-(defclass* tiene-nombre () (nombre))
+(def-mixin tiene-nombre () (nombre))
 (def-entidad dia (tiene-nombre))
 (def-entidad sesion () (numero))
 (def-comb fila (sesion dia))

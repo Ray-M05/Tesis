@@ -48,15 +48,17 @@
      :instancias 480 :restricciones 11
      :pares ("COLISIONES-DE-GRUPO" "COLISIONES-DE-PROFESOR" "REPETICIONES-EN-EL-DIA")
      :borradas ("JORNADA")
+     :sin-ultimo-valor ("DEF-SESION")
      :reemplazos
-     (("RESTRICCION-FRECUENCIA-EXACTA"
+     (("SESION" "(def-entidad sesion () (plan))")
+      ("RESTRICCION-FRECUENCIA-EXACTA"
        "(def-tqpq restriccion-frecuencia-exacta
           (op-igual (sesiones-del-plan pl) (frecuencia pl))
           :para (pl plan))")
       ("SESIONES-DE-LA-JORNADA"
        "(def-consulta sesiones-del-dia (p d)
           :itera-sobre (u ubicacion)
-          :comprueba (op-and (op-igual (profesor (plan (sesion u))) p)
+          :comprueba (op-y (op-igual (profesor (plan (sesion u))) p)
                              (op-igual (dia u) d))
           :operacion (suma 1))")
       ("RESTRICCION-TOPE-DIARIO-DE-PROFESOR"
@@ -70,14 +72,18 @@
         (*read-eval* nil))
     (read-from-string texto)))
 
+(defparameter *nombres-traducidos*
+  (mapcar (lambda (par) (cons (intern (first par) :lector) (intern (second par) :lector)))
+          '(("OP-AND" "OP-Y") ("OP-OR" "OP-O") ("OP-NOT" "OP-NO") ("DEFCLASS*" "DEF-MIXIN"))))
+
 (defun formas-de (ruta)
-  "Lee todas las formas de un archivo sin evaluarlas."
+  "Lee todas las formas de un archivo sin evaluarlas, con los nombres de hoy."
   (with-open-file (flujo ruta :external-format :utf-8)
     (let ((*package* (find-package :lector))
           (*read-eval* nil))
       (loop for forma = (read flujo nil flujo)
             until (eq forma flujo)
-            collect forma))))
+            collect (sublis *nombres-traducidos* forma)))))
 
 (defun simbolo (texto)
   "Devuelve el símbolo del paquete de comparación."
@@ -158,6 +164,8 @@
            nil)
           (reemplazo
            (leer (second reemplazo)))
+          ((member cabeza (getf cambios :sin-ultimo-valor) :test #'equal)
+           (butlast forma))
           ((equal cabeza "DEF-CONSULTA")
            (consulta-esperada forma cambios))
           ((and (equal cabeza "DEFVAR")

@@ -7,20 +7,26 @@ problemas_de_asignacion/
 ├── problemas_de_asignacion.asd      definición del sistema
 ├── README.md                        portada: cómo correr y cargar
 ├── estructura.md                    este archivo
+├── generar.lisp                     genera la salida de los dominios
 ├── decisiones-reimplementacion.md   decisiones tomadas y su motivo
 ├── plan-etapa-2.md                  plan de implementación del análisis
+├── plan-etapa-3.md                  plan de implementación de la emisión
 ├── src/
 │   ├── paquetes.lisp                los paquetes
 │   ├── dsl/                         el lenguaje
 │   ├── analisis/                    el modelo intermedio
-│   └── orquestacion/cargar.lisp     carga de un dominio
+│   ├── emision/                     Python, LaTeX y prosa
+│   └── orquestacion/                carga de un dominio y escritura de sus archivos
 ├── dominios/<dominio>/dominio.lisp  tv, tesis, docentes, seder, saul
-└── pruebas/
-    ├── correr.lisp                  ejecuta todas las pruebas
-    ├── dsl/                         pruebas del lenguaje
-    ├── analisis/                    pruebas del modelo intermedio
-    ├── referencia/                  salidas del sistema viejo
-    └── factibles/                   horarios sin incumplimientos duros
+├── dominios/saul/verbalizador.lisp  predicados de Saúl
+├── pruebas/
+│   ├── correr.lisp                  ejecuta todas las pruebas
+│   ├── dsl/                         pruebas del lenguaje
+│   ├── analisis/                    pruebas del modelo intermedio
+│   ├── emision/                     pruebas de las tres salidas
+│   ├── referencia/                  salidas del sistema viejo
+│   └── factibles/                   horarios sin incumplimientos duros
+└── salida/<dominio>/                modelo.py, modelo.tex y descripcion.md; git la ignora
 ```
 
 ## Dónde está cada lógica
@@ -39,7 +45,7 @@ problemas_de_asignacion/
 | Los registros de un dominio | `src/dsl/entidades.lisp` | `*slots-de-entidad*`, `*instancias-de-entidad*` y demás |
 | Que un dominio no vea los registros de otro | `src/dsl/entidades.lisp` | `con-registros-nuevos` |
 | Que un dominio de iteración exista | `src/dsl/entidades.lisp` | `exigir-dominio`, `exigir-iteradores` |
-| Los mixins | `src/dsl/entidades.lisp` | `defclass*`, `slots-de-padres` |
+| Los mixins | `src/dsl/entidades.lisp` | `def-mixin`, `slots-de-padres` |
 | Definir una entidad o una combinación | `src/dsl/entidades.lisp` | `def-entidad`, `def-comb`, `formas-de-entidad` |
 | Las funciones de acceso, como `(dia u)` | `src/dsl/entidades.lisp` | `formas-de-accesores` |
 | Crear una instancia, su aridad y su nombre | `src/dsl/entidades.lisp` | `expandir-instancia` |
@@ -79,12 +85,41 @@ problemas_de_asignacion/
 | El orden de las entidades, y los ciclos | `src/analisis/orden.lisp` | `orden-topologico` |
 | Los avisos | `src/analisis/construir.lisp` | `avisos-de-simetria`, `avisos-de-variables`, `avisos-de-restriccion` |
 | Los dominios del modelo | `src/analisis/construir.lisp` | `dominios-usados` |
+| Cargar las anotaciones de un dominio | `src/orquestacion/cargar.lisp` | `cargar-anotaciones` |
+| Escribir los tres archivos de un dominio | `src/orquestacion/exportar.lisp` | `exportar` |
+| Generar la salida desde la línea de comandos | `generar.lisp` | `dominios-indicados` |
+| Los destinos | `src/emision/destinos.lisp` | `python`, `matematica`, `verbalizador` |
+| Las funciones que despachan por destino | `src/emision/generar-codigo.lisp` | `generar-codigo`, `simbolo`, `emitir-consulta`, `emitir-restriccion`, `emitir` |
+| Lo que se suma cuando una cota se incumple con igualdad | `src/emision/generar-codigo.lisp` | `margen-de-incumplimiento` |
+| Cuándo se incumple o se cumple un cuantificador | `src/emision/generar-codigo.lisp` | `condicion-incumplida`, `condicion-exigida` |
+| Identificadores de Python y palabras reservadas | `src/emision/nombres.lisp` | `nombre-python`, `clase-python`, `constante-python` |
+| Que dos nombres no choquen en Python | `src/emision/nombres.lisp` | `exigir-nombres-distintos` |
+| Cómo se nombra una instancia | `src/emision/nombres.lisp` | `slots-de-etiqueta` |
+| La sangría y los bucles de Python | `src/emision/python/expresiones.lisp` | `con-sangria`, `linea`, `emitir-bucles` |
+| Comparar por identidad | `src/emision/python/datos.lisp` | `emitir-clase` |
+| De posiciones a filas | `src/emision/python/datos.lisp` | `emitir-crear-horario` |
+| Cuánto vale un choque y cuándo se agrupa | `src/emision/python/consultas.lisp` | `emitir-choque-agrupado`, `agrupable-p` |
+| Cuánto vale cada restricción en Python | `src/emision/python/restricciones.lisp` | `emitir-restriccion` |
+| `RESTRICCIONES` y `evaluar` | `src/emision/python/restricciones.lisp` | `emitir-evaluar` |
+| Lo que imprime y exporta el resultado | `src/emision/python/resultado.lisp` | `emitir-mostrar-resultado`, `emitir-a-json` |
+| Escribir LaTeX | `src/emision/matematica/expresiones.lisp` | `texto-latex`, `conjunto-latex` |
+| La definición de una consulta en LaTeX | `src/emision/matematica/modelo.lisp` | `definicion`, `lineas-de-condicion` |
+| Lo que exige y lo que cuesta una restricción en LaTeX | `src/emision/matematica/modelo.lisp` | `requisito`, `valor` |
+| Género, número y ortografía | `src/emision/verbalizador/lexico.lisp` | `nombre-prosa`, `genero`, `sintagma` |
+| Los predicados de un dominio | `src/emision/verbalizador/lexico.lisp` | `frase-de-predicado` |
+| La traducción nodo a nodo a español | `src/emision/verbalizador/expresiones.lisp` | `generar-codigo`, `consulta->prosa`, `restriccion-literal` |
+| Acortar «el plan de la sesión de u» a «su plan» | `src/emision/verbalizador/expresiones.lisp` | `acceso->prosa`, `acortable-p` |
+| La frase de cada familia | `src/emision/verbalizador/familias.lisp` | `oracion`, `sustantivo` |
+| La frase de cada restricción, o caer a lo literal | `src/emision/verbalizador/familias.lisp` | `idioma`, `restriccion->prosa` |
+| Las secciones del documento | `src/emision/verbalizador/documento.lisp` | `emitir`, `entidad->prosa`, `datos->prosa`, `etiqueta` |
+| Qué consultas no se listan en «Qué se mide» | `src/emision/verbalizador/documento.lisp` | `mecanicas` |
 
 ## Sistema
 
 | Archivo | Qué hace |
 |---|---|
 | `problemas_de_asignacion.asd` | Dice qué archivos forman el sistema, en qué orden se cargan y que están en UTF-8. |
+| `generar.lisp` | Guion que escribe `modelo.py`, `modelo.tex` y `descripcion.md` en `salida/<dominio>/`, de todos los dominios o de los que se nombren. |
 | `src/paquetes.lisp` | Define `dsl`, con las 27 palabras que ve un dominio; `dsl-ast`, con la implementación y lo que leen las capas siguientes; `analisis`, con el modelo; y `orquestacion`, con el cargador. |
 
 ## Lenguaje: `src/dsl/`
@@ -115,11 +150,48 @@ problemas_de_asignacion/
 | `orden.lisp` | Calcula a qué entidades apunta cada una y las ordena. Un ciclo es un error. |
 | `construir.lisp` | Une todo: tipos, consultas, restricciones, orden, dominios y los cuatro avisos. |
 
-## Carga: `src/orquestacion/`
+## Emisión: `src/emision/`
+
+Traduce el modelo a cada lenguaje. Un destino es una clase, y nadie lee los registros globales.
+
+| Archivo | Qué hace |
+|---|---|
+| `destinos.lisp` | Las clases `destino`, `infijo`, `python`, `matematica` y `verbalizador`, y la tabla que dice qué símbolo nombra a cada instancia. |
+| `generar-codigo.lisp` | Las funciones genéricas, sin métodos sobre `t`, lo que Python y LaTeX comparten y el valor de `margen-de-incumplimiento`. |
+| `nombres.lisp` | Los identificadores de Python, las palabras reservadas, el rechazo de nombres que chocarían y la regla de la etiqueta. |
+
+### `python/`: genera `modelo.py`
+
+| Archivo | Qué hace |
+|---|---|
+| `expresiones.lisp` | Cómo se escribe cada nodo. También la sangría y los bucles, con `i < j` en los pares. |
+| `datos.lisp` | Las clases con `eq=False` y `__str__`, una constante por instancia, las listas en orden declarado y `crear_horario`. |
+| `consultas.lisp` | El cuerpo con bucles de toda consulta y, en un choque, el recuento por celda cuando es exacto. |
+| `restricciones.lisp` | Una emisión por forma, `RESTRICCIONES` y `evaluar`, que devuelve valores sin ponderar. |
+| `resultado.lisp` | `_parejas`, `mostrar_resultado`, `a_json` y el archivo completo. |
+
+### `matematica/`: genera `modelo.tex`
+
+| Archivo | Qué hace |
+|---|---|
+| `expresiones.lisp` | Cómo se escribe cada nodo en LaTeX, y el escape de sus caracteres especiales. |
+| `modelo.lisp` | Conjuntos, decisiones, objetivo y restricciones. Cada restricción con su requisito, su valor si es blanda y sus consultas. |
+
+### `verbalizador/`: genera `descripcion.md`
+
+| Archivo | Qué hace |
+|---|---|
+| `lexico.lisp` | Morfología y palabras del idioma, con claves de texto y sin nada de un dominio. |
+| `expresiones.lisp` | La capa literal: traduce nodo a nodo. Sus variables de contexto solo se ligan aquí. |
+| `familias.lisp` | La frase de cada familia y de cada restricción. Si no hay frase, se cae a la capa literal. |
+| `documento.lisp` | Entidades, datos, qué se decide, qué se mide y restricciones. |
+
+## Carga y escritura: `src/orquestacion/`
 
 | Archivo | Qué hace |
 |---|---|
 | `cargar.lisp` | `cargar-flujo` crea el paquete `DOMINIO-<NOMBRE>`, carga el dominio con registros nuevos y devuelve su problema, o lo rechaza si no tiene. `cargar-dominio` hace lo mismo desde un archivo en UTF-8 y toma el nombre de la carpeta. |
+| `exportar.lisp` | `exportar` escribe `modelo.py`, `modelo.tex` y `descripcion.md` en una carpeta. Es mínimo: la etapa 5 lo completa. |
 
 ## Dominios: `dominios/`
 
@@ -137,7 +209,7 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 
 | Archivo | Qué hace |
 |---|---|
-| `correr.lisp` | Compila el sistema y ejecuta las pruebas de `dsl/` y `analisis/`. Una prueba que falla termina el proceso con código 1. |
+| `correr.lisp` | Compila el sistema y ejecuta las pruebas de `dsl/`, `analisis/` y `emision/`. Una prueba que falla termina el proceso con código 1. |
 | `dsl/utiles.lisp` | Dominio base de las pruebas, y los ayudantes `carga` y `rechaza`. `carga` falla ante cualquier aviso. |
 | `dsl/validacion.lisp` | Prueba la lectura de claves y la comprobación de nombres. |
 | `dsl/nodos.lisp` | Prueba los nodos, la jerarquía de dureza, el tamaño del vocabulario, y que no queden accesores de nodos ni nodos borrados. |
@@ -156,10 +228,17 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 | `analisis/normalizar.lisp` | Prueba las formas equivalentes, las cotas, lo genérico y la forma de las 26 restricciones. |
 | `analisis/orden.lisp` | Prueba el orden contra la prosa de referencia, las referencias y los ciclos. |
 | `analisis/modelo.lisp` | Prueba `construir-modelo` en los cinco dominios: consultas derivadas, dominios, avisos y pureza. También que no se lean registros globales, que no haya `case` y que no aparezcan nombres de un dominio. |
-| `referencia/<dominio>/` | Lo que produjo el sistema viejo: `dominio.lisp`, `horario.py`, `descripcion.md` y, en tesis, tv y SEDER, `modelo.txt` y `valores.json`. |
+| `emision/utiles.lisp` | El dominio de prueba, la carpeta temporal y la ejecución de Python. |
+| `emision/completitud.lisp` | Prueba que cada clase, operador, familia y forma tenga su método en cada destino, y que ninguno sea sobre `t`. |
+| `emision/python.lisp` | Prueba, con valores exactos, lo que ningún dominio real usa. |
+| `emision/comparar.py` y `emision/referencia.lisp` | Generan cada dominio y comparan sus valores con el sistema viejo y con los factibles. |
+| `emision/matematica.lisp` | Prueba cada forma en LaTeX y las correcciones de `diferencias-esperadas.md`, y compila si hay `pdflatex`. |
+| `emision/verbalizador.lisp` | Prueba la frase exacta de cada familia, cota y objetivo, y la capa literal. La comparación con la referencia es un informe. |
+| `emision/sin-dominio.lisp` | Prueba que `src/` no contenga símbolos de un dominio. |
+| `referencia/<dominio>/` | Lo que produjo el sistema viejo: `dominio.lisp`, `horario.py`, `descripcion.md`, `modelo.txt` y `valores.json`. |
 | `referencia/sistema_viejo.py` | Abre un `horario.py` viejo sin ejecutar el genético, y evalúa sus restricciones sobre un horario. |
 | `referencia/capturar.py` | Escribe `modelo.txt` y `valores.json` de cada dominio. |
-| `referencia/diferencias-esperadas.md` | Lo que la reimplementación cambia a propósito. Cualquier otra diferencia es un error. |
+| `referencia/diferencias-esperadas.md` | Lo que la reimplementación cambia a propósito. En los valores, cualquier otra diferencia es un error; en la prosa, se informa. |
 | `factibles/buscar.py` | Búsqueda local que encuentra un horario sin incumplimientos duros. |
 | `factibles/<dominio>.json` | Un horario factible de tesis, tv y SEDER, guardado como posiciones. |
 
@@ -170,6 +249,7 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 | `README.md` | Portada: mapa de capas, cómo correr las pruebas y cómo cargar un dominio. |
 | `decisiones-reimplementacion.md` | Cada decisión tomada, con su motivo, y lo pendiente a implementar. |
 | `plan-etapa-2.md` | Cómo se construyó el análisis, fase por fase, con lo esperado de cada dominio y las tablas de rechazos y avisos. |
+| `plan-etapa-3.md` | Cómo se construyó la emisión, fase por fase, y el destino de cada función del verbalizador. |
 | `../plan-reimplementacion.md` | El plan general de las cinco capas. |
 | `../deficiencias-por-capa.md` | El inventario de lo que se quiere corregir. |
 | `../BASE-CONOCIMIENTO-tesis.md` | La base de conocimiento de la tesis. |

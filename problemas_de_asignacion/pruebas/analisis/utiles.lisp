@@ -9,7 +9,7 @@
 (in-package :pruebas-analisis)
 
 (defparameter *base* "
-(defclass* tiene-nombre () (nombre))
+(def-mixin tiene-nombre () (nombre))
 (def-entidad dia (tiene-nombre) (orden))
 (def-entidad turno () (orden))
 (def-entidad profesor (tiene-nombre))
@@ -37,7 +37,7 @@
   :operacion (suma (orden (dia u))))
 (def-consulta del-dia (p d)
   :itera-sobre (u fila)
-  :comprueba (op-and (op-igual (profesor (sesion u)) p) (op-igual (dia u) d))
+  :comprueba (op-y (op-igual (profesor (sesion u)) p) (op-igual (dia u) d))
   :operacion (suma 1))
 ")
 

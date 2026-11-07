@@ -174,6 +174,8 @@ La operación `suma` emite `count += 1` y el valor de `:devuelve` no lo lee nadi
 
 En el SEDER, una instancia pequeña que se sabe resoluble, el genético se atasca a una o dos restricciones duras de la solución. Ninguno de los 216 vecinos posibles mejora el costo. Salir del atasco exige mover dos filas a la vez.
 
+**Corrección medida:** el atasco no ocurre siempre. El genético viejo llegó a 0 duras en 2 de 3 semillas con 100 generaciones, y con los choques contados una vez la mutación de radio uno llega en 15 de 20. Mover dos filas e intercambiar sube a 18 de 20: ayuda, pero no es tan crítico como aquí se dice, y contar doble era buena parte del problema (2.2).
+
 ### 4.3 El costo no se memoriza · grave
 
 `evaluar` se llama unas seis veces por individuo y generación. En Saúl, una corrida completa tarda unos tres días; memorizar el costo lo divide por seis.

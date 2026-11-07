@@ -33,7 +33,7 @@
 (defun aplicar-consulta (consulta argumentos)
   "Comprueba el uso de una consulta y devuelve su nodo de aplicación."
   (let ((nombre (slot-value consulta 'nombre))
-        (esperados (length (slot-value consulta 'args))))
+        (esperados (length (slot-value consulta 'parametros))))
     (when *dentro-de-comprueba*
       (rechazar "consulta ~a: no se puede usar dentro de otra consulta" nombre))
     (unless (= (length argumentos) esperados)
@@ -68,7 +68,7 @@
                       `(let ((*dentro-de-comprueba* t))
                          (def-consulta-simple
                            :nombre ',nombre
-                           :args ',parametros
+                           :parametros ',parametros
                            :variable-iteracion ',variables-iteracion
                            :dominio-iteracion dominios
                            :variables-pares ',variables-pares

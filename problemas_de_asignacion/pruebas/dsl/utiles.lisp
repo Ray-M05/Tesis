@@ -4,7 +4,7 @@
 (in-package :pruebas-dsl)
 
 (defparameter *base* "
-(defclass* tiene-nombre () (nombre))
+(def-mixin tiene-nombre () (nombre))
 (def-entidad dia (tiene-nombre) (orden))
 (def-entidad profesor (tiene-nombre))
 (def-entidad sesion () (profesor))

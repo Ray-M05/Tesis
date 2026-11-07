@@ -1,6 +1,6 @@
 (in-package :analisis)
 
-(defstruct ambito que variables tipos duenos)
+(defstruct (ambito (:constructor crear-ambito)) que variables tipos duenos)
 
 (defun iteradores-de (consulta)
   "Une :itera-sobre y :pares en una lista de (variable dominio), con :pareja en los de :pares."
@@ -64,7 +64,7 @@
                   (rechazar "restricción ~a: el argumento ~a no está en :para"
                             (slot-value restriccion 'nombre) argumento))
                 (list parametro (second variable))))
-            (slot-value (slot-value aplicacion 'consulta) 'args)
+            (slot-value (slot-value aplicacion 'consulta) 'parametros)
             (slot-value aplicacion 'argumentos))))
 
 (defun dominios-de-parametros (problema)
@@ -183,7 +183,7 @@
 
 (defun exigir-tipos-de-consulta (consulta parametros tipos duenos)
   "Exige una condición lógica y una operación con sentido."
-  (let* ((ambito (make-ambito :que (format nil "consulta ~a" (slot-value consulta 'nombre))
+  (let* ((ambito (crear-ambito :que (format nil "consulta ~a" (slot-value consulta 'nombre))
                               :variables (append (iteradores-de consulta) parametros)
                               :tipos tipos
                               :duenos duenos))
@@ -196,7 +196,7 @@
 (defun exigir-tipos-de-restriccion (restriccion tipos duenos)
   "Exige que la comprobación sea del tipo que pide su cuantificador."
   (let* ((que (format nil "restricción ~a" (slot-value restriccion 'nombre)))
-         (ambito (make-ambito :que que
+         (ambito (crear-ambito :que que
                               :variables (variables-de-para restriccion)
                               :tipos tipos
                               :duenos duenos))

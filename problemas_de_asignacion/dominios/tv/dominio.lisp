@@ -7,7 +7,7 @@
 ;; MIXINS
 ;; =====================================================================
 
-(defclass* tiene-nombre ()
+(def-mixin tiene-nombre ()
   (nombre))
 
 
@@ -59,7 +59,7 @@
 (def-consulta adyacentes-mismo-tipo ()
   :itera-sobre (c canal) (e1 emision) (e2 emision)
   :comprueba
-  (op-and (op-igual (canal (programa e1)) c)
+  (op-y (op-igual (canal (programa e1)) c)
           (op-igual (canal (programa e2)) c)
           (op-igual (dia   (bloque e1))   (dia   (bloque e2)))
           (op-igual (tipo  (programa e1)) (tipo  (programa e2)))
@@ -77,7 +77,7 @@
 (def-consulta consecutivos-por-canal (c)
   :itera-sobre (e1 emision) (e2 emision)
   :comprueba
-  (op-and (op-igual (canal (programa e1)) c)
+  (op-y (op-igual (canal (programa e1)) c)
           (op-igual (canal (programa e2)) c)
           (op-igual (dia   (bloque e1))   (dia   (bloque e2)))
           (op-igual (tipo  (programa e1)) (tipo  (programa e2)))

@@ -57,9 +57,9 @@
 (defun formas-de-entidad (nombre padres propios que)
   "Devuelve las formas comunes a def-entidad y def-comb."
   (exigir-nombre-nuevo nombre que)
-  (let* ((str (symbol-name nombre))
-         (clase-especifica (intern (concatenate 'string "REF-ESPECIFICA-A-" str)))
-         (clase-generica (intern (concatenate 'string "REF-GEN-A-" str)))
+  (let* ((texto (symbol-name nombre))
+         (clase-especifica (intern (concatenate 'string "REF-ESPECIFICA-A-" texto)))
+         (clase-generica (intern (concatenate 'string "REF-GEN-A-" texto)))
          (slots (append (slots-de-padres padres que) propios)))
     (exigir-variables slots que)
     `((defclass ,clase-especifica (,@padres ref-especifica-ent) ,(definiciones-de-slots propios))
@@ -87,7 +87,7 @@
              (append (gethash ',entidad *instancias-de-entidad*) (list ',instancia)))
        ',instancia)))
 
-(defmacro defclass* (nombre padres slots)
+(defmacro def-mixin (nombre padres slots)
   "Define un mixin: una clase cuyos slots heredan las entidades."
   (let ((que (format nil "mixin ~a" nombre)))
     (exigir-nombre-propio nombre que)

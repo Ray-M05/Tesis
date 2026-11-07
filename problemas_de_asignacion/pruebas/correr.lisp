@@ -12,7 +12,9 @@
                    "dsl/consultas" "dsl/restricciones" "dsl/problema" "dsl/migracion"
                    "analisis/utiles" "analisis/recorrido" "analisis/tipos" "analisis/atomos"
                    "analisis/simetria" "analisis/familias" "analisis/normalizar"
-                   "analisis/orden" "analisis/modelo"))
+                   "analisis/orden" "analisis/modelo"
+                   "emision/utiles" "emision/completitud" "emision/python" "emision/referencia"
+                   "emision/matematica" "emision/verbalizador" "emision/sin-dominio"))
   (load (merge-pathnames (concatenate 'string archivo ".lisp") *pruebas*)
         :external-format :utf-8)
   (format t "ok ~a~%" archivo))

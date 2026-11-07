@@ -58,7 +58,7 @@
 (dolist (escrito '("(def-nppq r (op-mayor (op-suma (q) (q2)) 10))"
                    "(def-tqpq r (op-igual (q) (q2)))"
                    "(def-nppq r (op-mayor (q) (op-suma (q2) 1)))"
-                   "(def-nppq r (op-or (op-mayor (q) 0) (op-mayor (q2) 0)))"
+                   "(def-nppq r (op-o (op-mayor (q) 0) (op-mayor (q2) 0)))"
                    "(def-nppq r (op-mayor 3 2))"
                    "(def-minimizar r 5 :para (d dia))"))
   (assert (eq (clase-de (normal escrito)) 'restriccion-generica) () "~a" escrito))
@@ -87,8 +87,8 @@
                      :itera-sobre (u fila)
                      :comprueba (op-mayor (orden (turno u)) 1)
                      :operacion (suma 1))
-                   (def-nppq r (op-or (op-mayor (q) 0)
-                                      (op-or (op-mayor (del-turno) 0) (op-mayor (q) 1))))")))
+                   (def-nppq r (op-o (op-mayor (q) 0)
+                                      (op-o (op-mayor (del-turno) 0) (op-mayor (q) 1))))")))
   (assert (equal (nombres (mapcar #'consulta-nombre (restriccion-consultas r)))
                  '("Q" "DEL-TURNO")))
   (assert (equal (nombres (restriccion-decisiones r)) '("DIA" "TURNO"))))
@@ -106,7 +106,7 @@
 ;; Las variables de :para no se confunden con las de la consulta aplicada, aunque se llamen igual.
 (let ((r (normal "(def-consulta m (w)
                     :itera-sobre (x ausencia)
-                    :comprueba (op-and (op-igual (dia x) lunes)
+                    :comprueba (op-y (op-igual (dia x) lunes)
                                        (op-igual (profesor x) (profesor (sesion w))))
                     :operacion (suma 1))
                   (def-sbqp r (op-menor-igual (m x) 1) :para (x fila))")))

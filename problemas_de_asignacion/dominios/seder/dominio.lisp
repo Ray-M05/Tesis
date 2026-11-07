@@ -12,7 +12,7 @@
 ;; MIXINS
 ;; =====================================================================
 
-(defclass* tiene-nombre ()
+(def-mixin tiene-nombre ()
   (nombre))
 
 
@@ -77,7 +77,7 @@
 (def-consulta clases-en-turno-no-disponible ()
   :itera-sobre (u ubicacion) (i indisponibilidad)
   :comprueba
-  (op-and (op-igual (anno (brigada u)) (anno i))
+  (op-y (op-igual (anno (brigada u)) (anno i))
           (op-igual (turno u)          (turno i)))
   :operacion (suma 1))
 
@@ -107,7 +107,7 @@
 (def-consulta colisiones-de-instalacion ()
   :pares (u1 u2) ubicacion
   :comprueba
-  (op-and (op-igual    (instalacion u1) (instalacion u2))
+  (op-y (op-igual    (instalacion u1) (instalacion u2))
           (op-igual    (turno u1) (turno u2))
           (op-igual    (paridad (anno (brigada u1)))
                        (paridad (anno (brigada u2))))
@@ -124,7 +124,7 @@
   :itera-sobre (p profesor)
   :pares (u1 u2) ubicacion
   :comprueba
-  (op-and (op-igual    (profesor (brigada u1)) p)
+  (op-y (op-igual    (profesor (brigada u1)) p)
           (op-igual    (profesor (brigada u2)) p)
           (op-igual    (turno u1) (turno u2))
           (op-igual    (paridad (anno (brigada u1)))

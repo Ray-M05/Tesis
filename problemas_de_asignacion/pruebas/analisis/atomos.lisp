@@ -30,14 +30,14 @@
 ;; Decisión o dato: depende de la raíz y del slot más cercano a ella.
 (let* ((p (problema-de "(def-consulta m ()
                           :itera-sobre (u fila) (a ausencia)
-                          :comprueba (op-and (op-igual (dia u) (dia a))
+                          :comprueba (op-y (op-igual (dia u) (dia a))
                                              (op-mayor (orden (turno u)) 1)
                                              (op-igual (profesor (sesion u)) (profesor a)))
                           :operacion (suma 1))
                         (def-nppq r (op-mayor (m) 0))"))
        (nodo (first (first (dominios-de-parametros p))))
        (variables (iteradores-de nodo))
-       (atomos (aplanar 'op-and (slot-value nodo 'comprobacion)))
+       (atomos (aplanar 'op-y (slot-value nodo 'comprobacion)))
        (primero (first atomos))
        (tercero (third atomos)))
   (flet ((decision (acceso) (nombres (decision-de acceso variables p))))
@@ -73,24 +73,24 @@
                '("ENLACE" "X" ("PROFESOR" "SESION") "A")))
 (assert (equal (papel-en "(op-igual x (profesor (sesion b)))")
                '("ENLACE" "X" ("PROFESOR" "SESION") "B")))
-(assert (equal (papel-en "(op-or (op-igual (profesor (sesion a)) x)
+(assert (equal (papel-en "(op-o (op-igual (profesor (sesion a)) x)
                                  (op-igual (profesor a) x))")
                '("PAPELES" "X" "A")))
 
-;; Sin papel: otra operación, un op-or de variables o raíces distintas.
-(assert (null (papel-en "(op-not (op-igual (dia a) (dia b)))")))
-(assert (null (papel-en "(op-or (op-igual (dia a) (dia b)) (op-igual (turno a) (turno b)))")))
+;; Sin papel: otra operación, un op-o de variables o raíces distintas.
+(assert (null (papel-en "(op-no (op-igual (dia a) (dia b)))")))
+(assert (null (papel-en "(op-o (op-igual (dia a) (dia b)) (op-igual (turno a) (turno b)))")))
 (assert (null (papel-en "(op-igual (orden (dia a)) (orden (turno b)))")))
-(assert (null (papel-en "(op-or (op-igual (profesor (sesion a)) x)
+(assert (null (papel-en "(op-o (op-igual (profesor (sesion a)) x)
                                 (op-igual (profesor (sesion b)) x))")))
 
-;; Los cinco dominios: tesis lleva los papeles en un op-or sobre una sola fila.
+;; Los cinco dominios: tesis lleva los papeles en un op-o sobre una sola fila.
 (let* ((p (problema-real "tesis"))
        (nodo (first (first (dominios-de-parametros p))))
        (paquete (symbol-package (slot-value nodo 'nombre)))
        (a (find-symbol "A1" paquete))
        (b (find-symbol "A2" paquete))
        (papeles (mapcar (lambda (atomo) (papel-de atomo a b p))
-                        (aplanar 'op-and (slot-value nodo 'comprobacion)))))
+                        (aplanar 'op-y (slot-value nodo 'comprobacion)))))
   (assert (equal (nombres (mapcar #'first papeles))
                  '("PAPELES" "PAPELES" "CELDA" "CELDA" "DISTINTO"))))

@@ -31,7 +31,7 @@
 
 (let* ((a (op-igual 1 2)) (b (op-igual 3 4)) (c (op-igual 5 6))
        (d (op-mayor 7 8)))
-  (assert (equal (aplanar 'op-and (op-and a b c)) (list a b c)))
-  (assert (equal (aplanar 'op-and (op-and a (op-and b c))) (list a b c)))
-  (assert (equal (aplanar 'op-or (op-or a b d)) (list a b d)))
-  (assert (equal (aplanar 'op-and a) (list a))))
+  (assert (equal (aplanar 'op-y (op-y a b c)) (list a b c)))
+  (assert (equal (aplanar 'op-y (op-y a (op-y b c))) (list a b c)))
+  (assert (equal (aplanar 'op-o (op-o a b d)) (list a b d)))
+  (assert (equal (aplanar 'op-y a) (list a))))
