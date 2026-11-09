@@ -5,6 +5,6 @@
   (let ((ruta (merge-pathnames (format nil "../../dominios/~a/dominio.lisp" dominio) *aqui*)))
     (con-carpeta (carpeta)
       (exportar (construir-modelo (cargar-dominio ruta)) carpeta)
-      (ejecutar-python carpeta
+      (ejecutar-python (merge-pathnames "python/" carpeta)
                        (namestring (merge-pathnames "comparar.py" *aqui*))
                        dominio))))

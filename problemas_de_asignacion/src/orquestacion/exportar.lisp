@@ -8,15 +8,22 @@
                                 :external-format :utf-8)
       (funcall escritura flujo))))
 
-(defun exportar (modelo carpeta &optional anotaciones)
-  "Escribe en CARPETA, un directorio, el modelo, su LaTeX, su prosa y un programa por estrategia."
-  (flet ((destino (clase &rest argumentos)
-           (apply #'make-instance clase :modelo modelo argumentos)))
-    (escribir "modelo.py" carpeta (lambda (flujo) (emitir (destino 'python) flujo)))
-    (escribir "modelo.tex" carpeta (lambda (flujo) (emitir (destino 'matematica) flujo)))
-    (escribir "descripcion.md" carpeta
-              (lambda (flujo)
-                (emitir (destino 'verbalizador :predicados (getf anotaciones :predicados)) flujo)))
-    (dolist (estrategia (list (make-instance 'genetico) (make-instance 'busqueda-local)))
-      (escribir (format nil "~a.py" (estrategia-nombre estrategia)) carpeta
-                (lambda (flujo) (emitir-estrategia estrategia (destino 'python) flujo))))))
+(defun carpeta-de (clase carpeta)
+  "Devuelve la subcarpeta de CARPETA en la que escribe el destino CLASE."
+  (merge-pathnames (format nil "~a/" (nombre-de-clase clase)) carpeta))
+
+(defun exportar (modelo carpeta &key (destinos (elegir nil 'destino "el destino"))
+                                     (estrategias (mapcar #'make-instance
+                                                          (elegir nil 'estrategia "la estrategia")))
+                                     anotaciones)
+  "Escribe una subcarpeta por destino y, en la de python, que siempre va si hay ESTRATEGIAS, un programa por estrategia."
+  (flet ((crear (clase)
+           (make-instance clase :modelo modelo :predicados (getf anotaciones :predicados)
+                                :allow-other-keys t)))
+    (dolist (clase (if estrategias (adjoin 'python destinos) destinos))
+      (let ((destino (crear clase)))
+        (escribir (archivo-de destino) (carpeta-de clase carpeta)
+                  (lambda (flujo) (emitir destino flujo)))))
+    (dolist (estrategia estrategias)
+      (escribir (format nil "~a.py" (estrategia-nombre estrategia)) (carpeta-de 'python carpeta)
+                (lambda (flujo) (emitir-estrategia estrategia (crear 'python) flujo))))))

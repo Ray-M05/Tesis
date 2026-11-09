@@ -43,6 +43,8 @@
     (linea destino stream "return {'horario': filas, 'valores': evaluar(horario)}"))
   (terpri stream))
 
+(defmethod archivo-de ((destino python)) "modelo.py")
+
 (defmethod emitir ((destino python) stream)
   (let ((modelo (destino-modelo destino)))
     (exigir-nombres-distintos modelo)

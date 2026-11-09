@@ -21,7 +21,7 @@ SALIDA = Path(__file__).resolve().parents[2] / 'salida'
 def correr(dominio, programa, *argumentos):
     """Ejecuta un programa en la carpeta del dominio y devuelve su JSON."""
     salida = subprocess.run([sys.executable, '-X', 'utf8', programa + '.py', *map(str, argumentos)],
-                            cwd=SALIDA / dominio, capture_output=True, text=True, encoding='utf-8')
+                            cwd=SALIDA / dominio / 'python', capture_output=True, text=True, encoding='utf-8')
     if salida.returncode != 0:
         raise RuntimeError(salida.stderr)
     return json.loads(Path(salida.stdout.strip().splitlines()[-1]).read_text(encoding='utf-8'))
@@ -45,7 +45,7 @@ def evaluaciones_por_individuo(corridas):
 
 
 def cargar_modelo(dominio):
-    spec = importlib.util.spec_from_file_location('modelo_' + dominio, SALIDA / dominio / 'modelo.py')
+    spec = importlib.util.spec_from_file_location('modelo_' + dominio, SALIDA / dominio / 'python' / 'modelo.py')
     modulo = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(modulo)
     return modulo

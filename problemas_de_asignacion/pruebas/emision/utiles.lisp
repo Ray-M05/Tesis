@@ -67,16 +67,7 @@
     (assert (zerop (sb-ext:process-exit-code proceso)) () "Python falló:~%~a" texto)
     texto))
 
-(defun codigo-generado (modelo)
-  "Devuelve como texto el modelo.py de MODELO."
-  (with-output-to-string (flujo)
-    (emitir (make-instance 'python :modelo modelo) flujo)))
-
-(defun comprobar-en-python (modelo guion)
-  "Ejecuta GUION, un programa con asserts, después de importar el modelo.py de MODELO."
-  (con-carpeta (carpeta)
-    (exportar modelo carpeta)
-    (let ((prueba (merge-pathnames "prueba.py" carpeta)))
-      (with-open-file (flujo prueba :direction :output :external-format :utf-8)
-        (format flujo "from modelo import *~%~a~%" guion))
-      (ejecutar-python carpeta "prueba.py"))))
+(defun modelo-del-dominio (dominio)
+  "Construye el modelo de un dominio real."
+  (construir-modelo
+   (cargar-dominio (merge-pathnames (format nil "../../dominios/~a/dominio.lisp" dominio) *aqui*))))

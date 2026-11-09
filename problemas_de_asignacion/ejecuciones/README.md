@@ -1,16 +1,63 @@
-# Cómo se ejecutan las estrategias
+# Cómo se genera y se ejecuta
 
-`sbcl --script generar.lisp` escribe en `salida/<dominio>/`, junto a `modelo.py`, un programa por estrategia:
-
-| Programa | Estrategia |
-|---|---|
-| `genetico.py` | Algoritmo genético |
-| `busqueda_local.py` | Búsqueda local |
-
-Se ejecutan desde la carpeta del dominio, porque importan `modelo.py`. La semilla es obligatoria:
+Todo pasa por `generar.lisp`, desde la carpeta `problemas_de_asignacion/`. Lo que no se nombra va entero.
 
 ```bash
-cd salida/seder
+sbcl --script generar.lisp                         # los cinco dominios, los tres destinos y las dos estrategias
+sbcl --script generar.lisp saul tv                 # solo esos dominios
+sbcl --script generar.lisp saul --destinos matematica verbalizador
+sbcl --script generar.lisp seder --estrategias genetico --ejecutar --semillas 0 1 2
+sbcl --script generar.lisp --archivo ejecuciones/seder.lisp
+```
+
+| Opción | Qué hace |
+|---|---|
+| dominios, antes de la primera opción | Las carpetas de `dominios/` que se generan. |
+| `--destinos` | `python`, `matematica`, `verbalizador`. |
+| `--estrategias` | `genetico`, `busqueda-local`. Sin nombrarlas van todas, pero solo si se genera `python`. Nombrar una trae `python` aunque no se pida, porque su programa importa `modelo.py`. |
+| `--ejecutar` | Además de generar, ejecuta cada estrategia con cada semilla, una tras otra. Sin esta opción solo se genera. |
+| `--semillas` | Las semillas de las corridas. Si no se nombra ninguna, se usa la 0. |
+| `--archivo` | Lee el pedido de un archivo. Va sola: no se mezcla con las demás opciones. |
+
+Los nombres son los de las clases. Uno que no existe da un error con la lista de los que hay, y no se genera nada. Si un dominio falla, se informa y se sigue con los demás. El proceso termina con código 1 si el pedido está mal escrito o si falló algún dominio o alguna corrida.
+
+## Archivos de ejecución
+
+Un archivo de esta carpeta guarda un pedido para repetirlo igual. Es una lista de Lisp que se lee sin evaluar nada, con un solo dominio:
+
+```lisp
+(:dominio "seder"
+ :destinos (python)
+ :estrategias ((genetico :generaciones 100)
+               (busqueda-local :tiempo 30))
+ :semillas (0 1 2)
+ :ejecutar t)
+```
+
+Las claves son las de la línea de comandos, con `:dominio` obligatorio. Cada estrategia es un nombre o una lista con su nombre y sus parámetros, que son los argumentos de su programa sin `--semilla`. Los parámetros solo valen con `:ejecutar t`, porque se pasan al programa al ejecutarlo: el programa generado tiene siempre los valores por defecto. Un parámetro que la estrategia no tiene da un error antes de generar nada.
+
+## Dónde queda cada cosa
+
+```
+salida/<dominio>/
+├── avisos.txt                 avisos del análisis, también impresos al generar
+├── python/
+│   ├── modelo.py
+│   ├── genetico.py
+│   ├── busqueda_local.py
+│   └── corridas/              un JSON por corrida
+├── matematica/modelo.tex
+└── verbalizador/descripcion.md
+```
+
+Al regenerar se sobrescribe lo generado y no se borra nada más, así que `corridas/` se conserva.
+
+## Ejecutar un programa a mano
+
+Los programas también se pueden ejecutar directamente desde `salida/<dominio>/python/`, porque importan `modelo.py`. Así la semilla es obligatoria:
+
+```bash
+cd salida/seder/python
 python genetico.py --semilla 0
 ```
 
@@ -71,7 +118,9 @@ La búsqueda local recuerda el mejor horario visto y es el que devuelve.
 | `posiciones` | El mejor horario como índices, para reconstruirlo con `modelo.crear_horario` |
 | `horario`, `valores` | El mejor horario en texto, y el valor sin ponderar de cada restricción |
 
-## Ejemplos
+## Ejemplos a mano
+
+Desde `salida/<dominio>/python/`:
 
 ```bash
 # Arrancar como el sistema viejo, para comparar

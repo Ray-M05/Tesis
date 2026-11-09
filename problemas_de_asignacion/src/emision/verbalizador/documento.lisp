@@ -100,6 +100,8 @@
           (capitalizar (nombre-prosa (restriccion-nombre restriccion)))
           (restriccion->prosa restriccion)))
 
+(defmethod archivo-de ((destino verbalizador)) "descripcion.md")
+
 (defmethod emitir ((destino verbalizador) stream)
   (let* ((*verbalizador* destino)
          (modelo (destino-modelo destino))

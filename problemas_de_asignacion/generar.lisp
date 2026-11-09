@@ -1,23 +1,20 @@
-;; Genera la salida de los dominios en salida/<dominio>/: sbcl --script generar.lisp [dominio...]
-;; Sin argumentos genera todos.
+;; Genera y, si se pide, ejecuta. Lo que no se nombra va entero; el detalle está en ejecuciones/README.md.
+;;   sbcl --script generar.lisp [dominio ...] [--destinos ...] [--estrategias ...] [--semillas ...] [--ejecutar]
+;;   sbcl --script generar.lisp --archivo ejecuciones/<nombre>.lisp
+;; Termina con código 1 si el pedido está mal escrito o si algún dominio falló.
 (require :asdf)
 
-(defparameter *raiz* (make-pathname :name nil :type nil :defaults *load-truename*))
-
-(asdf:load-asd (merge-pathnames "problemas_de_asignacion.asd" *raiz*))
+(asdf:load-asd (merge-pathnames "problemas_de_asignacion.asd"
+                                (make-pathname :name nil :type nil :defaults *load-truename*)))
 (let ((*compile-verbose* nil) (*compile-print* nil))
   (asdf:load-system "problemas_de_asignacion"))
 
-(defun dominios-indicados ()
-  "Devuelve los dominios pedidos al ejecutar el guion o, si no hay ninguno, todos."
-  (or (cddr (member "--script" sb-ext:*posix-argv* :test #'string=))
-      (mapcar (lambda (carpeta) (first (last (pathname-directory carpeta))))
-              (directory (merge-pathnames "dominios/*/" *raiz*)))))
-
-(dolist (dominio (dominios-indicados))
-  (let ((ruta (merge-pathnames (format nil "dominios/~a/dominio.lisp" dominio) *raiz*))
-        (carpeta (merge-pathnames (format nil "salida/~a/" dominio) *raiz*)))
-    (orquestacion:exportar (analisis:construir-modelo (orquestacion:cargar-dominio ruta))
-                           carpeta
-                           (orquestacion:cargar-anotaciones ruta))
-    (format t "~a: ~a~%" dominio (namestring carpeta))))
+(sb-ext:exit
+ :code (if (handler-case
+               (orquestacion:conducir
+                (orquestacion:pedido-de-argumentos (rest sb-ext:*posix-argv*)))
+             (error (condicion)
+               (format t "~a~%" condicion)
+               nil))
+           0
+           1))

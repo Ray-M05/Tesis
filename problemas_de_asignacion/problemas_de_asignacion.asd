@@ -60,4 +60,7 @@
      (:module "orquestacion"
       :serial t
       :components ((:file "cargar")
-                   (:file "exportar")))))))
+                   (:file "elegir")
+                   (:file "exportar")
+                   (:file "pedido")
+                   (:file "conducir")))))))

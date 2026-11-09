@@ -1,6 +1,6 @@
 # Diferencias esperadas respecto a la referencia
 
-La reimplementación corrige errores, así que algunas salidas **tienen** que cambiar. Este documento dice cuáles y cómo. Cualquier otra diferencia con la referencia es un error de la migración.
+La reimplementación corrige errores, así que algunas salidas **tienen** que cambiar. Este documento dice cuáles y cómo. Cualquier otra diferencia en los valores es un error de la migración.
 
 Los números entre paréntesis remiten a `deficiencias-por-capa.md`.
 
@@ -25,10 +25,7 @@ Diez consultas recorren las parejas ordenadas con una condición simétrica, as�
 | SEDER | `colisiones-de-profesor` | `restriccion-un-profesor-por-turno` |
 | SEDER | `colisiones-de-instalacion` | `restriccion-una-brigada-por-instalacion` |
 
-**Cuánto cambia el valor depende de D3.1:**
-
-- **si se cuentan parejas,** el valor nuevo es exactamente la mitad del viejo;
-- **si se cuenta el exceso por celda,** una celda con k filas en conflicto pasa de k(k−1) a k−1. Con k = 2 coincide con la mitad; con k ≥ 3 es menor.
+Se cuentan parejas (D3.1): **el valor nuevo es exactamente la mitad del viejo.**
 
 En los horarios factibles las diez valen 0 antes y después.
 
@@ -40,49 +37,20 @@ Las consultas de dos variables que ordenan el par **no cambian**: `adyacentes-mi
 
 Los únicos `:devuelve` distintos de 1 son `n-dias`, en `dias-asistidos` de tesis y `dias-de-profesor` de docentes. Los dos están en consultas `contar-distintos-dias`, donde el valor no se usa, y desaparecen al migrar a `contar-distintos` con atributo explícito (D1.4).
 
+### Cotas (D3.7)
+
+Dos restricciones de Saúl pasan de 1 por elemento a lo que falta para cumplirlas:
+
+| Restricción | Viejo | Nuevo |
+|---|---|---|
+| `restriccion-tope-diario-de-profesor` | 1 por cada profesor y día que supera el tope | Lo que supera el tope |
+| `restriccion-frecuencia-exacta` | 1 por cada plan que no la cumple | Cuánto se aleja de la frecuencia. Vale 0 siempre, porque no se puede incumplir |
+
+Valen 0 en los mismos casos, y el nuevo nunca es menor. Con la semilla 0, el tope pasa de 5 a 9.
+
 ### Comparación por identidad (3.1)
 
-Sin diferencias de valor. Las entidades que hoy son iguales campo a campo ya se distinguen con campos añadidos a propósito (el número de la sesión de Saúl, el nombre del año del SEDER). Si al migrar se quitan esos campos, los valores tienen que seguir siendo los mismos; esa es la prueba de que la comparación por identidad funciona.
-
----
-
-## Modelo matemático (`modelo.txt`)
-
-Cambia de formato por completo: deja de ser texto impreso por el Python (3.3). Con independencia del formato, el contenido tiene que corregir esto:
-
-| Dominio | Hoy | Debe quedar |
-|---|---|---|
-| Saúl | R9: `(sesiones_del_plan(h, pl) = frecuencia(?))` | cuantificador explícito y entidad nombrada: «∀ pl ∈ PLAN: sesiones_del_plan(h, pl) = frecuencia(pl)» |
-| Saúl | R11: `(sesiones_de_la_jornada(h, jornada) ≤ tope(?))` | «∀ p ∈ PROFESOR, ∀ d ∈ DIA: sesiones_del_dia(h, p, d) ≤ 5» (D1.5) |
-| Saúl | R10: `(primeros_turnos_de_lejanos(h) > 0)`, la condición prohibida | la restricción: `primeros_turnos_de_lejanos(h) = 0`, igual que un `nppq` |
-| Saúl | R9 y R11 sin «donde» | cada restricción con la definición de sus consultas (2.5) |
-| docentes | `dias_de_profesor(h, prof) = \|{ fecha(c) : … }\|` | el atributo real, `dia(c)` (3.7) |
-| SEDER | la letra `I` nombra a la vez instalación e indisponibilidad, y `T` y `I` aparecen dos veces | un símbolo distinto por conjunto (3.4) |
-| todos | encabezado «tdpq / sbqp / minimizar» | `ndpq`; la errata desaparece con el emisor nuevo |
-
-Los modelos de docentes y Saúl no se capturaron ejecutando (D0.6). Sus filas de esta tabla salen de leer las cadenas `print` de su `horario.py`.
-
----
-
-## Prosa en español (`descripcion.md`)
-
-**Debe quedar idéntica**, carácter por carácter:
-
-| Dominio | Caracteres |
-|---|---|
-| tesis | 1720 |
-| docentes | 2192 |
-| tv | 1433 |
-| Saúl | 4313 |
-| SEDER | 2527 |
-
-La única excepción aceptable es una que cambie el significado por una decisión tomada. Por ejemplo, si una consulta de choque pasa a `:pares` y el verbalizador ya no necesita callar la cláusula del orden del par. Cada excepción se anota aquí con su motivo antes de aceptarla.
-
-Excepciones aceptadas:
-
-| Dominio | Líneas | Motivo |
-|---|---|---|
-| Saúl | 25 («Una jornada tiene…»), 51 («Hay 130 jornadas.») y 103 (restricción tope diario de profesor) | `jornada` se elimina al cuantificar sobre profesor y día (D1.5). Las dos primeras desaparecen; el texto de la tercera se fija en la etapa 3. El número de caracteres de Saúl deja de ser 4313. |
+Sin diferencias de valor. Docentes tiene 20 sesiones iguales campo a campo, pero ninguna consulta las compara directamente. Saúl pierde `numero` (D3.9), que solo existía para distinguir sus sesiones: los valores tienen que seguir siendo los mismos, y esa es la prueba de que la comparación por identidad funciona.
 
 ---
 

@@ -7,31 +7,35 @@ problemas_de_asignacion/
 ├── problemas_de_asignacion.asd      definición del sistema
 ├── README.md                        portada: cómo correr y cargar
 ├── estructura.md                    este archivo
-├── generar.lisp                     genera la salida de los dominios
-├── ejecuciones/README.md            cómo se ejecutan las estrategias y qué es cada argumento
+├── generar.lisp                     única entrada: genera y, si se pide, ejecuta
+├── ejecuciones/README.md            cómo se pide una ejecución y qué es cada argumento
+├── ejecuciones/<nombre>.lisp        pedidos guardados para repetirlos; hoy, seder.lisp
 ├── decisiones-reimplementacion.md   decisiones tomadas y su motivo
 ├── plan-etapa-2.md                  plan de implementación del análisis
 ├── plan-etapa-3.md                  plan de implementación de la emisión
 ├── plan-etapa-4.md                  plan de implementación de las estrategias
+├── plan-etapa-5.md                  plan de implementación de la orquestación
 ├── src/
 │   ├── paquetes.lisp                los paquetes
 │   ├── dsl/                         el lenguaje
 │   ├── analisis/                    el modelo intermedio
 │   ├── emision/                     Python, LaTeX y prosa
 │   ├── estrategias/                 los programas que buscan un horario
-│   └── orquestacion/                carga de un dominio y escritura de sus archivos
+│   └── orquestacion/                el pedido, la carga, la escritura y la ejecución
 ├── dominios/<dominio>/dominio.lisp  tv, tesis, docentes, seder, saul
 ├── dominios/saul/verbalizador.lisp  predicados de Saúl
 ├── pruebas/
+│   ├── README.md                    qué comprueba cada archivo
 │   ├── correr.lisp                  ejecuta todas las pruebas
-│   ├── dsl/                         pruebas del lenguaje
-│   ├── analisis/                    pruebas del modelo intermedio
-│   ├── emision/                     pruebas de las tres salidas
-│   ├── estrategias/                 pruebas de las estrategias
-│   ├── referencia/                  salidas del sistema viejo
+│   ├── dsl/                         la migración de los dominios
+│   ├── emision/                     completitud y comparación con el sistema viejo
+│   ├── estrategias/                 pruebas de las estrategias y rendimiento.py
+│   ├── orquestacion/                pruebas del pedido y de conducir
+│   ├── referencia/                  dominios y valores del sistema viejo
 │   └── factibles/                   horarios sin incumplimientos duros
-└── salida/<dominio>/                modelo.py, modelo.tex, descripcion.md, genetico.py,
-                                     busqueda_local.py y corridas/; git la ignora
+└── salida/<dominio>/                avisos.txt; python/ con modelo.py, genetico.py,
+                                     busqueda_local.py y corridas/; matematica/modelo.tex;
+                                     verbalizador/descripcion.md
 ```
 
 ## Dónde está cada lógica
@@ -91,8 +95,13 @@ problemas_de_asignacion/
 | Los avisos | `src/analisis/construir.lisp` | `avisos-de-simetria`, `avisos-de-variables`, `avisos-de-restriccion` |
 | Los dominios del modelo | `src/analisis/construir.lisp` | `dominios-usados` |
 | Cargar las anotaciones de un dominio | `src/orquestacion/cargar.lisp` | `cargar-anotaciones` |
-| Escribir los archivos de un dominio, también los programas de las estrategias | `src/orquestacion/exportar.lisp` | `exportar` |
-| Generar la salida desde la línea de comandos | `generar.lisp` | `dominios-indicados` |
+| Qué destinos y estrategias existen, y elegirlos por nombre | `src/orquestacion/elegir.lisp` | `clases-hoja`, `elegir` |
+| Escribir cada destino en su carpeta, y los programas en la de python | `src/orquestacion/exportar.lisp` | `exportar`, `carpeta-de` |
+| Leer la línea de comandos o un archivo de `ejecuciones/` | `src/orquestacion/pedido.lisp` | `pedido-de-argumentos`, `pedido-de-archivo` |
+| Revisar nombres y parámetros antes de generar | `src/orquestacion/conducir.lisp` | `resolver`, `revisar-parametros` |
+| Generar un dominio, guardar sus avisos y ejecutar sus corridas | `src/orquestacion/conducir.lisp` | `conducir`, `generar-dominio`, `escribir-avisos`, `ejecutar` |
+| La entrada desde la terminal | `generar.lisp` | |
+| Qué archivo escribe cada destino | junto al `emitir` de cada destino | `archivo-de` |
 | Los destinos | `src/emision/destinos.lisp` | `python`, `matematica`, `verbalizador` |
 | Las funciones que despachan por destino | `src/emision/generar-codigo.lisp` | `generar-codigo`, `simbolo`, `emitir-consulta`, `emitir-restriccion`, `emitir` |
 | Lo que se suma cuando una cota se incumple con igualdad | `src/emision/generar-codigo.lisp` | `margen-de-incumplimiento` |
@@ -134,8 +143,8 @@ problemas_de_asignacion/
 | Archivo | Qué hace |
 |---|---|
 | `problemas_de_asignacion.asd` | Dice qué archivos forman el sistema, en qué orden se cargan y que están en UTF-8. |
-| `generar.lisp` | Guion que escribe `modelo.py`, `modelo.tex` y `descripcion.md` en `salida/<dominio>/`, de todos los dominios o de los que se nombren. |
-| `src/paquetes.lisp` | Define `dsl`, con las 27 palabras que ve un dominio; `dsl-ast`, con la implementación y lo que leen las capas siguientes; `analisis`, con el modelo; `emision`, con los destinos; `estrategias`, con los programas que buscan; y `orquestacion`, con el cargador. |
+| `generar.lisp` | La única entrada. Carga el sistema, convierte sus argumentos en un pedido, llama a `conducir` y sale con código 1 si el pedido está mal escrito o algo falló. |
+| `src/paquetes.lisp` | Define `dsl`, con las 27 palabras que ve un dominio; `dsl-ast`, con la implementación y lo que leen las capas siguientes; `analisis`, con el modelo; `emision`, con los destinos; `estrategias`, con los programas que buscan; y `orquestacion`, con el pedido, el cargador y la escritura. |
 
 ## Lenguaje: `src/dsl/`
 
@@ -172,7 +181,7 @@ Traduce el modelo a cada lenguaje. Un destino es una clase, y nadie lee los regi
 | Archivo | Qué hace |
 |---|---|
 | `destinos.lisp` | Las clases `destino`, `infijo`, `python`, `matematica` y `verbalizador`, y la tabla que dice qué símbolo nombra a cada instancia. |
-| `generar-codigo.lisp` | Las funciones genéricas, sin métodos sobre `t`, lo que Python y LaTeX comparten y el valor de `margen-de-incumplimiento`. |
+| `generar-codigo.lisp` | Las funciones genéricas, sin métodos sobre `t`, lo que Python y LaTeX comparten y el valor de `margen-de-incumplimiento`. `archivo-de` dice qué archivo escribe cada destino; su método va junto al `emitir` de cada uno. |
 | `nombres.lisp` | Los identificadores de Python, las palabras reservadas, el rechazo de nombres que chocarían y la regla de la etiqueta. |
 
 ### `python/`: genera `modelo.py`
@@ -212,12 +221,17 @@ Cada estrategia escribe un programa de Python que importa `modelo.py` y no sabe 
 | `genetico/python.lisp` | La clase `genetico`, con sus parámetros y operadores, la elección de mutación y el bucle con elitismo. |
 | `busqueda-local/python.lisp` | La clase `busqueda-local`, su operador `mejor-opcion-de-fila` y su bucle. Está entera en este archivo: añadirla no cambió nada de los anteriores, y el `genetico.py` generado salió idéntico. |
 
-## Carga y escritura: `src/orquestacion/`
+## Orquestación: `src/orquestacion/`
+
+Un pedido nombra dominios, destinos, estrategias con sus parámetros, semillas y si se ejecuta. Lo que no nombra va entero. El flujo es: `generar.lisp` → `pedido-de-argumentos` o `pedido-de-archivo` → `conducir` → `resolver` → por cada dominio, `generar-dominio`: cargar, avisos, `exportar` y, si se pide, `ejecutar`.
 
 | Archivo | Qué hace |
 |---|---|
-| `cargar.lisp` | `cargar-flujo` crea el paquete `DOMINIO-<NOMBRE>`, carga el dominio con registros nuevos y devuelve su problema, o lo rechaza si no tiene. `cargar-dominio` hace lo mismo desde un archivo en UTF-8 y toma el nombre de la carpeta. |
-| `exportar.lisp` | `exportar` escribe en una carpeta `modelo.py`, `modelo.tex`, `descripcion.md`, `genetico.py` y `busqueda_local.py`, estos dos con los valores por defecto de sus clases. La etapa 5 decide qué se genera y dónde. |
+| `cargar.lisp` | `cargar-flujo` crea el paquete `DOMINIO-<NOMBRE>`, carga el dominio con registros nuevos y devuelve su problema, o lo rechaza si no tiene. `cargar-dominio` hace lo mismo desde un archivo en UTF-8 y toma el nombre de la carpeta. `cargar-anotaciones` lee las del verbalizador. |
+| `elegir.lisp` | `clases-hoja` saca las opciones de las clases que existen; `elegir` convierte nombres en clases, o devuelve todas, y rechaza un nombre que no existe con la lista de los que hay. No hay tablas escritas a mano. |
+| `exportar.lisp` | `exportar` escribe cada destino pedido en `<carpeta>/<destino>/<archivo-de>` y los programas de las estrategias en `python/`, que se escribe siempre que haya estrategias. Los programas llevan los valores por defecto de sus clases. |
+| `pedido.lisp` | Convierte la línea de comandos o un archivo de `ejecuciones/` en un pedido. El archivo se lee sin evaluar, en un paquete aparte, y tiene un solo dominio. `--archivo` no se mezcla con otras opciones. |
+| `conducir.lisp` | `resolver` pasa los nombres a clases y revisa los parámetros contra `argumentos-de`. `conducir` recorre los dominios: carga, imprime los avisos y los escribe en `avisos.txt`, exporta y, si se pide, ejecuta cada estrategia con cada semilla, una tras otra, con la 0 si no hay ninguna. Un dominio o una corrida que falla se informa y se sigue; devuelve nil si algo falló. |
 
 ## Dominios: `dominios/`
 
@@ -233,47 +247,7 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 
 ## Pruebas: `pruebas/`
 
-| Archivo | Qué hace |
-|---|---|
-| `correr.lisp` | Compila el sistema y ejecuta las pruebas de `dsl/`, `analisis/`, `emision/` y `estrategias/`. Una prueba que falla termina el proceso con código 1. |
-| `dsl/utiles.lisp` | Dominio base de las pruebas, y los ayudantes `carga` y `rechaza`. `carga` falla ante cualquier aviso. |
-| `dsl/validacion.lisp` | Prueba la lectura de claves y la comprobación de nombres. |
-| `dsl/nodos.lisp` | Prueba los nodos, la jerarquía de dureza, el tamaño del vocabulario, y que no queden accesores de nodos ni nodos borrados. |
-| `dsl/entidades.lisp` | Prueba entidades, instancias y cargador: `clase` carga, `consulta` se rechaza y dos dominios no se mezclan. |
-| `dsl/consultas.lisp` | Prueba consultas, condiciones y aplicación, con sus rechazos. |
-| `dsl/restricciones.lisp` | Prueba los cuantificadores, `:para` y `:peso`, con sus rechazos. |
-| `dsl/problema.lisp` | Prueba `def-problema`, el orden escrito y la foto, con sus rechazos. |
-| `dsl/migracion.lisp` | Lee cada dominio viejo sin evaluarlo, calcula cómo debería quedar y exige que el nuevo sea igual, forma por forma. También compara las instancias cargadas y comprueba que `jornada` era todo profesor × día con tope 5. |
-| `dsl/archivo/dominio.lisp` | Dominio mínimo para probar la carga desde un archivo en UTF-8. |
-| `analisis/utiles.lisp` | Dominio base de las pruebas, sus ayudantes y lo que se espera de cada una de las 26 restricciones. |
-| `analisis/recorrido.lisp` | Prueba que toda clase del AST tenga un método de `hijos`, y el recorrido. |
-| `analisis/tipos.lisp` | Prueba los tipos, los dominios de los parámetros y cada rechazo. |
-| `analisis/atomos.lisp` | Prueba decisión o dato, y cada papel. |
-| `analisis/simetria.lisp` | Prueba que los 10 choques sean simétricos y las 3 relaciones ordenadas no, y los casos límite. |
-| `analisis/familias.lisp` | Prueba la familia de las 26 consultas, la celda de los 10 choques y lo que queda en `consulta-generica`. |
-| `analisis/normalizar.lisp` | Prueba las formas equivalentes, las cotas, lo genérico y la forma de las 26 restricciones. |
-| `analisis/orden.lisp` | Prueba el orden contra la prosa de referencia, las referencias y los ciclos. |
-| `analisis/modelo.lisp` | Prueba `construir-modelo` en los cinco dominios: consultas derivadas, dominios, avisos y pureza. También que no se lean registros globales, que no haya `case` y que no aparezcan nombres de un dominio. |
-| `emision/utiles.lisp` | El dominio de prueba, la carpeta temporal y la ejecución de Python. |
-| `emision/completitud.lisp` | Prueba que cada clase, operador, familia y forma tenga su método en cada destino, y que ninguno sea sobre `t`. |
-| `emision/python.lisp` | Prueba, con valores exactos, lo que ningún dominio real usa. |
-| `emision/comparar.py` y `emision/referencia.lisp` | Generan cada dominio y comparan sus valores con el sistema viejo y con los factibles. |
-| `emision/matematica.lisp` | Prueba cada forma en LaTeX y las correcciones de `diferencias-esperadas.md`, y compila si hay `pdflatex`. |
-| `emision/verbalizador.lisp` | Prueba la frase exacta de cada familia, cota y objetivo, y la capa literal. La comparación con la referencia es un informe. |
-| `emision/grupos.lisp` | Prueba `IDENTIDADES`, `DOMINIOS_DE_DECISION`, `crear_fila` y las tres listas de restricciones, y que las opciones permitidas del SEDER y de Saúl sean las del prototipo. |
-| `emision/sin-dominio.lisp` | Prueba que `src/` no contenga símbolos de un dominio. |
-| `estrategias/utiles.lisp` | Un dominio pequeño con prohibición, choque, cota constante y blanda, y la ejecución de un programa con argumentos y la lectura de su JSON. |
-| `estrategias/completitud.lisp` | Prueba que cada operador y estrategia tenga su método primario, que ninguno sea sobre `t`, y que `ejecuciones/README.md` explique todos los argumentos. |
-| `estrategias/comunes.lisp` | Prueba la semilla obligatoria, los tres inicios, el costo, la caché, que una constante se evalúe una vez, que no se copie con `deepcopy` y el voraz en el SEDER. |
-| `estrategias/genetico.lisp` | Prueba la reproducibilidad, cada motivo de parada y que no haya `--estancamiento`, los valores por defecto sacados de los slots, cada operador y las probabilidades del bucle, y 0 duras en tv, tesis y SEDER. |
-| `estrategias/busqueda-local.lisp` | Prueba lo mismo para la búsqueda local, que el paso cambie una fila como mucho a una opción permitida y sin ruido no empeore, y que se devuelva el mejor visto. |
-| `estrategias/rendimiento.py` | Va aparte de `correr.lisp` porque tarda unos 40 minutos. Comprueba los criterios de la etapa 4 sobre `salida/`, compara arranques y estrategias, mide cuánto tarda cada dominio y Saúl con distintas poblaciones y generaciones, y proyecta en minutos lo que costarían corridas e instancias más grandes. |
-| `referencia/<dominio>/` | Lo que produjo el sistema viejo: `dominio.lisp`, `horario.py`, `descripcion.md`, `modelo.txt` y `valores.json`. |
-| `referencia/sistema_viejo.py` | Abre un `horario.py` viejo sin ejecutar el genético, y evalúa sus restricciones sobre un horario. |
-| `referencia/capturar.py` | Escribe `modelo.txt` y `valores.json` de cada dominio. |
-| `referencia/diferencias-esperadas.md` | Lo que la reimplementación cambia a propósito. En los valores, cualquier otra diferencia es un error; en la prosa, se informa. |
-| `factibles/buscar.py` | Búsqueda local que encuentra un horario sin incumplimientos duros. |
-| `factibles/<dominio>.json` | Un horario factible de tesis, tv y SEDER, guardado como posiciones. |
+Qué comprueba cada archivo está en [`pruebas/README.md`](pruebas/README.md). Al cerrar la etapa 5 se quitaron las pruebas de piezas sueltas y las herramientas de una sola vez; quedan la migración, la completitud, la comparación con el sistema viejo, las estrategias y la orquestación.
 
 ## Documentos
 
@@ -283,6 +257,8 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 | `decisiones-reimplementacion.md` | Cada decisión tomada, con su motivo, y lo pendiente a implementar. |
 | `plan-etapa-2.md` | Cómo se construyó el análisis, fase por fase, con lo esperado de cada dominio y las tablas de rechazos y avisos. |
 | `plan-etapa-3.md` | Cómo se construyó la emisión, fase por fase, y el destino de cada función del verbalizador. |
+| `plan-etapa-4.md` | Cómo se construyeron las estrategias, con las mediciones. |
+| `plan-etapa-5.md` | Cómo se construyó la orquestación y la limpieza de `pruebas/`. |
 | `../plan-reimplementacion.md` | El plan general de las cinco capas. |
 | `../deficiencias-por-capa.md` | El inventario de lo que se quiere corregir. |
 | `../BASE-CONOCIMIENTO-tesis.md` | La base de conocimiento de la tesis. |

@@ -210,6 +210,8 @@
     (dolist (restriccion restricciones)
       (emitir-restriccion restriccion destino stream))))
 
+(defmethod archivo-de ((destino matematica)) "modelo.tex")
+
 (defmethod emitir ((destino matematica) stream)
   (let* ((restricciones (modelo-restricciones (destino-modelo destino)))
          (blandas (remove-if-not #'restriccion-peso restricciones)))

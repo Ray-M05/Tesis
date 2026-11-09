@@ -56,7 +56,7 @@
 (defpackage :emision
   (:use :cl :dsl :dsl-ast :analisis)
   (:export #:destino #:destino-modelo #:python #:matematica #:verbalizador
-           #:generar-codigo #:simbolo #:emitir-consulta #:emitir-restriccion #:emitir
+           #:generar-codigo #:simbolo #:emitir-consulta #:emitir-restriccion #:emitir #:archivo-de
            #:nombre-python #:clase-python #:constante-python #:slots-de-etiqueta
            #:linea #:con-sangria))
 
@@ -67,6 +67,8 @@
 
 (defpackage :orquestacion
   (:use :cl :dsl-ast)
-  (:import-from :emision #:emitir #:python #:matematica #:verbalizador)
-  (:import-from :estrategias #:emitir-estrategia #:estrategia-nombre #:genetico #:busqueda-local)
-  (:export #:cargar-dominio #:cargar-flujo #:cargar-anotaciones #:exportar))
+  (:import-from :analisis #:construir-modelo #:modelo-avisos #:aviso-mensaje)
+  (:import-from :emision #:emitir #:archivo-de #:destino #:python)
+  (:import-from :estrategias #:emitir-estrategia #:estrategia #:estrategia-nombre #:argumentos-de)
+  (:export #:cargar-dominio #:cargar-flujo #:cargar-anotaciones #:exportar #:elegir
+           #:pedido-de-argumentos #:pedido-de-archivo #:conducir))

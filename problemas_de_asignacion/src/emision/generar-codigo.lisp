@@ -15,6 +15,9 @@
 (defgeneric emitir (destino stream)
   (:documentation "Escribe en STREAM el archivo completo de DESTINO."))
 
+(defgeneric archivo-de (destino)
+  (:documentation "Devuelve el nombre del archivo que escribe DESTINO."))
+
 (defgeneric margen-de-incumplimiento (comparador)
   (:documentation "Devuelve lo que se suma a |q - umbral| según la condición de incumplimiento."))
 

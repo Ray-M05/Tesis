@@ -1,0 +1,75 @@
+(in-package :pruebas-orquestacion)
+
+;; Línea de comandos.
+(assert (null (pedido-de-argumentos '())))
+(assert (equal (pedido-de-argumentos '("Saul" "tv" "--destinos" "python" "--estrategias" "genetico"
+                                       "--semillas" "0" "1" "--ejecutar"))
+               '(:dominios ("saul" "tv") :destinos ("python") :estrategias (("genetico"))
+                 :semillas (0 1) :ejecutar t)))
+(rechaza (lambda () (pedido-de-argumentos '("--bla"))) "opción desconocida: --bla" "--destinos")
+(rechaza (lambda () (pedido-de-argumentos '("tv" "--archivo" "x.lisp"))) "--archivo va solo")
+(rechaza (lambda () (pedido-de-argumentos '("--archivo"))) "--archivo va solo")
+(rechaza (lambda () (pedido-de-argumentos '("--semillas"))) "--semillas necesita al menos un valor")
+(rechaza (lambda () (pedido-de-argumentos '("--semillas" "x"))) "la semilla x no es un entero")
+(rechaza (lambda () (pedido-de-argumentos '("--destinos" "a" "--destinos" "b"))) "repetida")
+(rechaza (lambda () (pedido-de-argumentos '("--ejecutar" "3"))) "--ejecutar no lleva valores")
+
+;; Resolver: los nombres pasan a ser clases; sin nombrar nada, todo.
+(defun nombres-de (clases)
+  (mapcar (lambda (clase) (string-downcase (symbol-name (first (uiop:ensure-list clase))))) clases))
+
+(multiple-value-bind (destinos estrategias) (orquestacion::resolver '())
+  (assert (equal (nombres-de destinos) '("matematica" "python" "verbalizador")))
+  (assert (equal (nombres-de estrategias) '("busqueda-local" "genetico"))))
+;; Sin python no van estrategias, salvo que se nombren.
+(assert (null (nth-value 1 (orquestacion::resolver '(:destinos ("matematica"))))))
+(assert (equal (nombres-de (nth-value 1 (orquestacion::resolver '(:destinos ("matematica")
+                                                                  :estrategias ((genetico))))))
+               '("genetico")))
+(assert (equal (rest (first (nth-value 1 (orquestacion::resolver
+                                          '(:estrategias (("GENETICO" :poblacion 200)) :ejecutar t)))))
+               '(:poblacion 200)))
+(rechaza (lambda () (orquestacion::resolver '(:destinos ("nada"))))
+         "no existe el destino nada. Hay: matematica, python, verbalizador")
+(rechaza (lambda () (orquestacion::resolver '(:estrategias (("tabu")))))
+         "no existe la estrategia tabu. Hay: busqueda-local, genetico")
+(rechaza (lambda () (orquestacion::resolver '(:estrategias (("genetico" :poblacion 200)))))
+         "genetico: los parámetros solo se usan al ejecutar")
+(rechaza (lambda () (orquestacion::resolver '(:estrategias (("genetico" :ruido 1)) :ejecutar t)))
+         "genetico no tiene el parámetro :ruido" "poblacion")
+(rechaza (lambda () (orquestacion::resolver '(:estrategias (("busqueda-local" :semilla 1)) :ejecutar t)))
+         "busqueda-local no tiene el parámetro :semilla")
+
+;; Archivo.
+(defvar *evaluado* nil)
+
+(con-carpeta (carpeta)
+  (assert (equal (archivo-con carpeta "(:dominio saul :destinos (python) :semillas (3)
+                                         :estrategias (busqueda-local (genetico :poblacion 200))
+                                         :ejecutar t)")
+                 '(:dominios ("saul") :destinos ("python")
+                   :estrategias (("busqueda-local") ("genetico" :poblacion 200))
+                   :semillas (3) :ejecutar t))
+          () "archivo bien escrito")
+  (assert (equal (archivo-con carpeta "(:dominio \"tv\")")
+                 '(:dominios ("tv") :destinos nil :estrategias nil :semillas nil :ejecutar nil)))
+  ;; Se lee sin evaluar.
+  (rechaza (lambda () (archivo-con carpeta "(:dominio #.(cl:progn (cl:setf pruebas-orquestacion::*evaluado* cl:t) \"tv\"))"))
+           "no se puede leer")
+  (assert (null *evaluado*))
+  (rechaza (lambda () (archivo-con carpeta "(:dominio tv :semilla 0)")) "clave desconocida :SEMILLA")
+  (rechaza (lambda () (archivo-con carpeta "(:destinos (python))")) ":dominio tiene que ser un nombre")
+  (rechaza (lambda () (archivo-con carpeta "(:dominio (tv saul))")) ":dominio tiene que ser un nombre")
+  (rechaza (lambda () (archivo-con carpeta "(:dominio tv) (:dominio saul)")) "una sola lista")
+  (rechaza (lambda () (archivo-con carpeta "(:dominio tv :ejecutar)")) "lista de propiedades")
+  (rechaza (lambda () (archivo-con carpeta "(:dominio tv :estrategias ((genetico :poblacion)))"))
+           "(nombre :parametro valor ...)")
+  (rechaza (lambda () (archivo-con carpeta "(:dominio tv :semillas (0 x))")) "la semilla X no es un entero")
+  (rechaza (lambda () (archivo-con carpeta "(:dominio tv")) "no se puede leer")
+  (rechaza (lambda () (pedido-de-archivo (merge-pathnames "no-existe.lisp" carpeta))) "no existe el archivo"))
+
+;; Los archivos de ejecuciones/ se leen y se resuelven sin errores.
+(let ((archivos (directory (merge-pathnames "../../ejecuciones/*.lisp" *aqui*))))
+  (assert archivos)
+  (dolist (archivo archivos)
+    (orquestacion::resolver (pedido-de-archivo archivo))))

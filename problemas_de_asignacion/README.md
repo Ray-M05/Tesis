@@ -13,29 +13,52 @@ Reimplementación por capas del DSL de problemas de asignación con restriccione
 | 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends | **completada** |
 | 3. Emisión | `src/emision/` | un destino por lenguaje: Python, LaTeX y prosa en español | **completada** |
 | 4. Estrategias | `src/estrategias/` | cómo se busca la solución: genético y búsqueda local | **completada** |
-| 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde | pendiente |
+| 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde, y su ejecución | **completada** |
 
 Las carpetas se crean en la etapa que las llena.
 
+## Etapa 5: la orquestación
+
+`generar.lisp` es la única entrada. Genera lo que se nombra y, si se pide, lo ejecuta; lo que no se nombra va entero. Se ejecuta desde `problemas_de_asignacion/`:
+
+```bash
+sbcl --script generar.lisp                                             # todo
+sbcl --script generar.lisp saul --destinos matematica
+sbcl --script generar.lisp seder --estrategias genetico --ejecutar --semillas 0 1 2
+sbcl --script generar.lisp --archivo ejecuciones/seder.lisp            # un pedido guardado
+```
+
+Cada destino queda en su carpeta, y los avisos del análisis se imprimen y se guardan:
+
+```
+salida/<dominio>/
+├── avisos.txt
+├── python/          modelo.py, genetico.py, busqueda_local.py y corridas/
+├── matematica/      modelo.tex
+└── verbalizador/    descripcion.md
+```
+
+Las opciones, el formato de un archivo de `ejecuciones/` y los argumentos de cada estrategia están en [`ejecuciones/README.md`](ejecuciones/README.md). La implementación está en [`plan-etapa-5.md`](plan-etapa-5.md).
+
 ## Etapa 4: las estrategias
 
-`generar.lisp` escribe también, en `salida/<dominio>/`, un programa por estrategia que importa `modelo.py`:
+`generar.lisp` escribe también, en `salida/<dominio>/python/`, un programa por estrategia que importa `modelo.py`:
 
 | Archivo | Qué es | Sale de |
 |---|---|---|
 | `genetico.py` | Algoritmo genético | `src/estrategias/genetico/` |
 | `busqueda_local.py` | Búsqueda local | `src/estrategias/busqueda-local/` |
 
-Se ejecutan desde la carpeta del dominio, con una semilla obligatoria:
+Se ejecutan con `--ejecutar` (etapa 5) o a mano desde su carpeta, con una semilla obligatoria:
 
 ```bash
-cd salida/seder
+cd salida/seder/python
 python genetico.py --semilla 0
 ```
 
 Cada corrida guarda un JSON en `corridas/`. La misma semilla con los mismos argumentos da el mismo resultado. Qué es cada argumento y su valor por defecto está en [`ejecuciones/README.md`](ejecuciones/README.md).
 
-Los criterios de la etapa y el costo en minutos de corridas más grandes se miden aparte, porque tarda unos 15 minutos:
+Los criterios de la etapa y el costo en minutos de corridas más grandes se miden aparte, porque tarda unos 40 minutos:
 
 ```bash
 python pruebas/estrategias/rendimiento.py
@@ -51,13 +74,7 @@ Genera los tres archivos de cada dominio, incluida la prosa del verbalizador. Se
 sbcl --script generar.lisp
 ```
 
-Para generar solo algunos dominios, se nombran:
-
-```bash
-sbcl --script generar.lisp saul tesis
-```
-
-Los dominios son `tv`, `tesis`, `docentes`, `seder` y `saul`. La salida queda en `salida/<dominio>/`, que git ignora, y cada ejecución sobrescribe la anterior:
+Los dominios son `tv`, `tesis`, `docentes`, `seder` y `saul`. La salida queda en `salida/<dominio>/<destino>/`, y cada ejecución sobrescribe lo generado:
 
 | Archivo | Qué es | Sale de |
 |---|---|---|
@@ -66,7 +83,7 @@ Los dominios son `tv`, `tesis`, `docentes`, `seder` y `saul`. La salida queda en
 | `descripcion.md` | La descripción en español, del verbalizador | `src/emision/verbalizador/` |
 | `genetico.py` y `busqueda_local.py` | Las estrategias, descritas en la etapa 4 | `src/estrategias/` |
 
-Para revisar la prosa, abre `salida/<dominio>/descripcion.md`. La referencia con la que se compara es `pruebas/referencia/<dominio>/descripcion.md`, y las diferencias previstas están en [`diferencias-esperadas.md`](pruebas/referencia/diferencias-esperadas.md).
+Para revisar la prosa, abre `salida/<dominio>/verbalizador/descripcion.md`.
 
 Desde Lisp, lo mismo para un dominio:
 
@@ -74,10 +91,10 @@ Desde Lisp, lo mismo para un dominio:
 (let ((ruta "dominios/saul/dominio.lisp"))
   (orquestacion:exportar (analisis:construir-modelo (orquestacion:cargar-dominio ruta))
                          "salida/saul/"
-                         (orquestacion:cargar-anotaciones ruta)))
+                         :anotaciones (orquestacion:cargar-anotaciones ruta)))
 ```
 
-Las pruebas ejecutan el Python generado, así que hace falta `python` en el `PATH`. El LaTeX se compila si hay `pdflatex`, en el `PATH` o en la variable `PDFLATEX`; si no, se avisa y no falla.
+Las pruebas ejecutan el Python generado, así que hace falta `python` en el `PATH`.
 
 La implementación está en [`plan-etapa-3.md`](plan-etapa-3.md).
 
@@ -89,13 +106,13 @@ La implementación está en [`plan-etapa-3.md`](plan-etapa-3.md).
 (analisis:construir-modelo (orquestacion:cargar-dominio "dominios/tv/dominio.lisp"))
 ```
 
-Lo que no tiene sentido, como comparar un día con un número, se rechaza con `error-dsl`. Lo dudoso queda en `modelo-avisos`. Todavía nadie llama al análisis al cargar un dominio ni muestra los avisos: eso llega en la etapa 5.
+Lo que no tiene sentido, como comparar un día con un número, se rechaza con `error-dsl`. Lo dudoso queda en `modelo-avisos`, que `generar.lisp` imprime y guarda en `salida/<dominio>/avisos.txt`.
 
 La implementación está en [`plan-etapa-2.md`](plan-etapa-2.md).
 
 ## Etapa 1: el DSL
 
-Los dominios están en `dominios/<dominio>/dominio.lisp` y solo describen el problema. Las pruebas comprueban cada entrada mal formada y comparan los cinco dominios con su referencia:
+Los dominios están en `dominios/<dominio>/dominio.lisp` y solo describen el problema. Las pruebas comparan los cinco dominios con su referencia. Qué comprueba cada archivo está en [`pruebas/README.md`](pruebas/README.md):
 
 ```bash
 sbcl --script pruebas/correr.lisp
@@ -116,30 +133,18 @@ Las decisiones están en [`decisiones-reimplementacion.md`](decisiones-reimpleme
 
 ## Etapa 0: la referencia
 
-`pruebas/referencia/<dominio>/` guarda lo que produce el sistema viejo, para comprobar que la versión nueva dice lo mismo:
+`pruebas/referencia/<dominio>/` guarda lo que produjo el sistema viejo, para comprobar que la versión nueva calcula lo mismo:
 
-| Archivo | Qué es | Dominios |
-|---|---|---|
-| `dominio.lisp` | la fuente que produjo la referencia | los cinco |
-| `horario.py` | el Python generado | los cinco |
-| `descripcion.md` | la prosa del verbalizador | los cinco |
-| `modelo.txt` | lo que imprime `mostrar_modelo()` | tesis, tv, SEDER |
-| `valores.json` | diez horarios con semilla fija, como índices, y el valor de cada restricción | tesis, tv, SEDER |
+| Archivo | Qué es |
+|---|---|
+| `dominio.lisp` | la fuente que produjo la referencia, congelada |
+| `valores.json` | diez horarios con semilla fija, como índices, y el valor de cada restricción |
 
-`pruebas/factibles/<dominio>.json` guarda un horario sin incumplimientos duros por dominio: tesis, tv y SEDER.
-
-Docentes y Saúl se capturan sin ejecutar el genético (D3.8), y no tienen horario factible.
+`pruebas/factibles/<dominio>.json` guarda un horario sin incumplimientos duros de tesis, tv y SEDER.
 
 Lo que la reimplementación cambia a propósito está en [`pruebas/referencia/diferencias-esperadas.md`](pruebas/referencia/diferencias-esperadas.md). Cualquier otra diferencia es un error.
 
-### Regenerar la referencia
-
-```bash
-cd pruebas/referencia && python capturar.py tesis tv seder
-cd pruebas/factibles && python buscar.py tesis tv seder
-```
-
-`capturar.py` tarda unos segundos. `buscar.py` tarda minuto y medio, sobre todo por tesis.
+Las herramientas que capturaron estos datos, y los `horario.py`, `modelo.txt` y `descripcion.md` del sistema viejo, se quitaron al cerrar la etapa 5. El sistema viejo sigue en `restrictions_language-main/` si hubiera que rehacerlos.
 
 ## Decisiones tomadas
 

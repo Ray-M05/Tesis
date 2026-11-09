@@ -203,6 +203,18 @@ En una cota, si se incumple, vale `|q − umbral|`, más 1 si la condición de i
 | Al regenerar | Se sobrescribe lo generado y la carpeta no se borra, así que las corridas guardadas se conservan. |
 | Si un dominio falla | Se informa y se sigue con el resto. |
 | Los cuatro puntos del verbalizador | Se revisan al terminar la etapa, no dentro de ella. |
+| Fases genéricas | No se implementan. Cada destino ya escribe sus partes en orden en su `emitir`, y la estrategia va en su propio archivo. |
+| Parámetros de una estrategia | Se aplican al ejecutar: el programa se genera con los valores por defecto y la orquestación le pasa los parámetros. Así dos corridas distintas no se pisan el programa. |
+| Semilla por defecto | 0, si no se nombra ninguna. |
+| Pruebas de piezas sueltas y herramientas de una sola vez | Se quitan al final de la etapa. Quedan las que comparan con el sistema viejo, las de completitud, las de las estrategias, las de la orquestación y `rendimiento.py`. Se pierde la prueba del contenido de `modelo.tex` y `descripcion.md` y de los mensajes de rechazo del lenguaje. |
+| Qué archivo escribe cada destino | Lo dice el propio destino con `archivo-de`, junto a su `emitir`. Un destino nuevo no toca la orquestación. |
+| Estrategias sin nombrar | Van todas si se genera `python`; si no, ninguna. Nombrar una trae `python` aunque no se pida, porque su programa importa `modelo.py`. |
+| Qué es un pedido | Una lista de propiedades, igual venga de la línea de comandos o de un archivo. No hace falta una clase: no tiene comportamiento. Los nombres pasan a minúsculas y el archivo se lee en un paquete aparte, para no crear símbolos en los del sistema. |
+| Cuándo se revisa un pedido | Entero, antes de generar nada: nombres, parámetros contra `argumentos-de` y que haya `:ejecutar t` si hay parámetros. |
+| `avisos.txt` | Se escribe siempre, aunque esté vacío, para que no queden avisos de una generación anterior. |
+| Una corrida que termina mal | Cuenta como fallo de su dominio; las demás corridas y dominios siguen, y el proceso termina con código 1. |
+| La semilla 0 por defecto | La pone la orquestación. Un programa ejecutado a mano sigue exigiendo `--semilla`. |
+| Los argumentos de `generar.lisp` | Se leen con `(rest sb-ext:*posix-argv*)`: con `--script`, SBCL ya quita la opción y el nombre del guion. El guion anterior los buscaba detrás de `--script` y nunca los recibía, así que siempre generaba los cinco dominios. |
 
 ## Cómo queda cada recorrido
 

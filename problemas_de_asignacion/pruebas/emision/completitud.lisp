@@ -47,11 +47,12 @@
       (comprobar-metodos #'emitir-restriccion
                          (list (allocate-instance forma) destino nil)
                          forma))
-    (comprobar-metodos #'emitir (list destino nil) clase)))
+    (comprobar-metodos #'emitir (list destino nil) clase)
+    (comprobar-metodos #'archivo-de (list destino) clase)))
 
-(comprobar-destino 'python)
-(comprobar-destino 'matematica)
-(comprobar-destino 'verbalizador)
+(assert (= (length (hojas-de 'destino)) 3))
+(dolist (destino (hojas-de 'destino))
+  (comprobar-destino (class-name destino)))
 
 (dolist (familia (hojas-de 'consulta-m))
   (let ((consulta (allocate-instance familia)))
@@ -76,6 +77,7 @@
 (comprobar-sin-defecto #'emitir-consulta '(0 1))
 (comprobar-sin-defecto #'emitir-restriccion '(0 1))
 (comprobar-sin-defecto #'emitir '(0))
+(comprobar-sin-defecto #'archivo-de '(0))
 
 ;; Un nodo sin traducir es un error, no un texto.
 (assert (null (compute-applicable-methods
