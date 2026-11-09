@@ -6,7 +6,8 @@
     "nonlocal" "not" "or" "pass" "raise" "return" "true" "try" "while" "with" "yield"
     "abs" "counter" "dataclass" "enumerate" "len" "max" "min" "object" "print" "self" "set"
     "str" "sum" "zip"
-    "a_json" "crear_horario" "evaluar" "grupos" "horario" "i" "mostrar_resultado"
+    "a_json" "constantes" "crear_fila" "crear_horario" "de_una_fila" "dominios_de_decision"
+    "evaluar" "grupos" "horario" "i" "identidades" "mostrar_resultado" "prohibiciones"
     "q" "restricciones" "total" "valores")
   "Palabras de Python y nombres del código generado, que un dominio no puede ocupar.")
 

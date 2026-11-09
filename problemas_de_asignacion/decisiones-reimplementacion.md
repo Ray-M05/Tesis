@@ -171,11 +171,38 @@ En una cota, si se incumple, vale `|q − umbral|`, más 1 si la condición de i
 | Cómo se combinan duras y blandas | Suma ponderada: `penalización × duras + Σ peso × blandas`, con penalización 1000. Las blandas de un horario al azar no pasan de 18, así que una prioridad lexicográfica daría el mismo orden. |
 | Cómo es la mutación | Mueve entre 1 y k filas, con k = 2 por defecto, más un intercambio entre dos filas. En el SEDER pasa de 15 a 18 semillas de 20. |
 | Si los valores prohibidos se quitan también al mutar | No, solo al arrancar. Se midió: en el SEDER no cambia nada, y en Saúl queda en 111,5 frente a 118,7 duras con 6 semillas y rangos solapados. Con arranque voraz, 14,2 frente a 13,8. |
-| Cuándo se detiene una corrida | Con 0 duras y sin blandas, con 100 generaciones sin mejora, en el máximo de generaciones o por tiempo. Seguir tras ser factible mejora algo las blandas por poco costo. |
+| Cuándo se detiene una corrida | El genético, con 0 duras y sin blandas, en el máximo de generaciones o por tiempo. No se detiene por estancamiento: se quitó porque en Saúl seguía mejorando después de 100 generaciones sin mejora, de 17 a 14 duras. La búsqueda local sí se detiene tras 2 000 pasos sin mejora, porque sin eso sus 100 000 pasos tardarían horas. Seguir tras ser factible mejora algo las blandas por poco costo. |
+| Cómo se reparte la parada | Dos clases: `parada-por-limite`, la del genético, y `parada-por-estancamiento`, la de la búsqueda local, que añade `--estancamiento`. Cada estrategia elige la suya en un slot, así que cambiar la de una no toca la otra. |
 | Cómo se generan los operadores | Cada operador es una clase Lisp con un método por destino que escribe su Python. Añadir uno no toca los demás, como pide 4.1. |
 | Qué se invierte en velocidad de evaluación | Solo no recalcular las restricciones que no dependen de ninguna decisión. Agrupar las relaciones y la evaluación incremental quedan como trabajo extra. |
 | Dónde se fijan la semilla y los parámetros | Valores por defecto en la clase Lisp, y argumentos al ejecutar el Python, para no regenerar en cada corrida. Sin semilla da error. `ejecuciones/` lleva un archivo Markdown que explica cada parámetro y argumento. |
+| De quién es cada argumento | De la pieza que lo usa: el tamaño del torneo es del torneo, el radio de `mover-filas`, la probabilidad de intercambiar del intercambio, y el estancamiento y el tiempo de la parada. La estrategia solo tiene los de su bucle. Cambiar un operador cambia sus argumentos sin tocar los demás. |
+| Qué cuenta como evaluación | Solo evaluar un horario completo. Las comprobaciones del voraz sobre un horario a medias no cuentan, porque no producen un individuo. |
+| Qué listas de restricciones da `modelo.py` | Listas de nombres, no de funciones, para que el JSON y las pruebas hablen de cada restricción por su nombre. |
+| Cómo es un paso de la búsqueda local | Un operador, `mejor-opcion-de-fila`: elige una fila al azar y le da, entre sus opciones permitidas, la de menor costo, desempatando al azar. El horario actual entra entre los candidatos, así que quedarse es posible y no se vuelve a evaluar. Con `--ruido` le da una opción permitida al azar. Devuelve el mejor horario visto, no el último. |
+| Dónde vive la búsqueda local | Entera en su archivo, con su operador. Añadirla no tocó `estrategia.lisp`, `operadores.lisp` ni el genético, y el `genetico.py` de los cinco dominios salió idéntico byte a byte. |
+| Qué programas escribe `exportar` | `genetico.py` y `busqueda_local.py`, con los valores por defecto de sus clases, junto a los tres archivos del modelo. Los argumentos se cambian al ejecutar, sin regenerar. |
+| Cómo se mide el rendimiento | Con `pruebas/estrategias/rendimiento.py`, aparte de las pruebas porque tarda minutos. Las corridas de los criterios van en paralelo, y entonces su tiempo no vale; las de tiempo van de una en una. Lo que no se puede medir se proyecta desde el costo de una generación y de una evaluación. |
 | Qué se exige para dar la etapa por cumplida | SEDER: al menos 18 de 20 semillas en 0 duras. Saúl: no se exige 0, porque no se sabe si es posible; no superar 17 duras y como mucho 1 evaluación por individuo. Al terminar se calcula en minutos cuánto costaría una corrida más grande. |
+
+## Orquestación
+
+| En qué consistía | Decisión y motivo |
+|---|---|
+| Un proceso por dominio o la misma imagen | La misma imagen. Cada dominio se carga en su propio paquete `DOMINIO-<NOMBRE>`, que solo ve Common Lisp y el vocabulario `dsl`, y con registros nuevos. Así el `def-clase` que genera la entidad `clase` de docentes no es el de la infraestructura, y un dominio no ve las instancias de otro. |
+| Qué se hace con `verbalizador/` | Nada: se encarga el usuario. |
+| Cómo se pide una ejecución | De las dos formas. La línea de comandos para lo rápido; un archivo de `ejecuciones/` para una corrida que se quiere repetir o citar. |
+| Dónde queda la salida | Una carpeta por destino dentro de la del dominio. Los programas de las estrategias van con `modelo.py`, porque lo importan. |
+| Cómo se elige un destino o una estrategia | Por el nombre de su clase. Una clase nueva queda disponible sin tocar la orquestación. |
+| Qué se hace con los avisos del análisis | Se imprimen al generar y se guardan en la salida del dominio. |
+| Si la orquestación ejecuta la búsqueda | Solo si se pide. Por defecto, solo genera. |
+| Banco de comparación | No se hace. `rendimiento.py` queda como está. |
+| Qué es un archivo de `ejecuciones/` | Una lista de Lisp que se lee sin evaluar, con un solo dominio. No se mezcla con la línea de comandos. |
+| Qué se genera si no se nombra nada | Todo: todos los dominios, destinos y estrategias. |
+| Varias semillas | Se ejecutan una tras otra. |
+| Al regenerar | Se sobrescribe lo generado y la carpeta no se borra, así que las corridas guardadas se conservan. |
+| Si un dominio falla | Se informa y se sigue con el resto. |
+| Los cuatro puntos del verbalizador | Se revisan al terminar la etapa, no dentro de ella. |
 
 ## Cómo queda cada recorrido
 

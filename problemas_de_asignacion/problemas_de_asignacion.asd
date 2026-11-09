@@ -49,6 +49,14 @@
                                  (:file "expresiones")
                                  (:file "familias")
                                  (:file "documento")))))
+     (:module "estrategias"
+      :serial t
+      :components ((:file "estrategia")
+                   (:file "operadores")
+                   (:module "genetico"
+                    :components ((:file "python")))
+                   (:module "busqueda-local"
+                    :components ((:file "python")))))
      (:module "orquestacion"
       :serial t
       :components ((:file "cargar")

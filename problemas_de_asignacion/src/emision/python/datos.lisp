@@ -38,21 +38,28 @@
     (terpri stream)))
 
 (defun emitir-crear-horario (destino stream)
-  "Define crear_horario: una fila por identidad, con las posiciones de cada variable."
+  "Define la identidad, los dominios de las decisiones, crear_fila y crear_horario, una fila por identidad."
   (let* ((problema (modelo-problema (destino-modelo destino)))
-         (identidad (problema-identidad problema)))
-    (linea destino stream "def crear_horario(posiciones):")
+         (identidad (problema-identidad problema))
+         (variables (problema-variables problema)))
+    (linea destino stream "IDENTIDADES = ~a" (constante-python identidad))
+    (linea destino stream "DOMINIOS_DE_DECISION = [~{~a~^, ~}]" (mapcar #'constante-python variables))
+    (terpri stream)
+    (linea destino stream "def crear_fila(i, posicion):")
     (con-sangria (destino)
-      (linea destino stream "return [~a(~a=instancia~{, ~a~}) for instancia, fila in zip(~a, posiciones)]"
+      (linea destino stream "return ~a(~a=IDENTIDADES[i]~{, ~a~})"
              (clase-python (problema-combinacion problema))
              (nombre-python identidad)
-             (loop for variable in (problema-variables problema)
-                   for posicion from 0
-                   collect (format nil "~a=~a[fila[~d]]"
+             (loop for variable in variables
+                   for indice from 0
+                   collect (format nil "~a=~a[posicion[~d]]"
                                    (nombre-python variable)
                                    (constante-python variable)
-                                   posicion))
-             (constante-python identidad)))
+                                   indice))))
+    (terpri stream)
+    (linea destino stream "def crear_horario(posiciones):")
+    (con-sangria (destino)
+      (linea destino stream "return [crear_fila(i, posicion) for i, posicion in enumerate(posiciones)]"))
     (terpri stream)))
 
 (defun emitir-datos (destino stream)

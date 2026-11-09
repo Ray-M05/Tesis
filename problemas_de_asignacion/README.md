@@ -12,10 +12,36 @@ Reimplementación por capas del DSL de problemas de asignación con restriccione
 | 1. DSL | `src/dsl/` | el lenguaje que escribe el usuario | **completada** |
 | 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends | **completada** |
 | 3. Emisión | `src/emision/` | un destino por lenguaje: Python, LaTeX y prosa en español | **completada** |
-| 4. Estrategias | `src/estrategias/` | cómo se busca la solución | pendiente |
+| 4. Estrategias | `src/estrategias/` | cómo se busca la solución: genético y búsqueda local | **completada** |
 | 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde | pendiente |
 
 Las carpetas se crean en la etapa que las llena.
+
+## Etapa 4: las estrategias
+
+`generar.lisp` escribe también, en `salida/<dominio>/`, un programa por estrategia que importa `modelo.py`:
+
+| Archivo | Qué es | Sale de |
+|---|---|---|
+| `genetico.py` | Algoritmo genético | `src/estrategias/genetico/` |
+| `busqueda_local.py` | Búsqueda local | `src/estrategias/busqueda-local/` |
+
+Se ejecutan desde la carpeta del dominio, con una semilla obligatoria:
+
+```bash
+cd salida/seder
+python genetico.py --semilla 0
+```
+
+Cada corrida guarda un JSON en `corridas/`. La misma semilla con los mismos argumentos da el mismo resultado. Qué es cada argumento y su valor por defecto está en [`ejecuciones/README.md`](ejecuciones/README.md).
+
+Los criterios de la etapa y el costo en minutos de corridas más grandes se miden aparte, porque tarda unos 15 minutos:
+
+```bash
+python pruebas/estrategias/rendimiento.py
+```
+
+La implementación está en [`plan-etapa-4.md`](plan-etapa-4.md).
 
 ## Etapa 3: la emisión
 
@@ -38,6 +64,7 @@ Los dominios son `tv`, `tesis`, `docentes`, `seder` y `saul`. La salida queda en
 | `modelo.py` | Datos, consultas, restricciones y `evaluar`, sin búsqueda | `src/emision/python/` |
 | `modelo.tex` | El modelo matemático, para `\input` en un documento con `amsmath` | `src/emision/matematica/` |
 | `descripcion.md` | La descripción en español, del verbalizador | `src/emision/verbalizador/` |
+| `genetico.py` y `busqueda_local.py` | Las estrategias, descritas en la etapa 4 | `src/estrategias/` |
 
 Para revisar la prosa, abre `salida/<dominio>/descripcion.md`. La referencia con la que se compara es `pruebas/referencia/<dominio>/descripcion.md`, y las diferencias previstas están en [`diferencias-esperadas.md`](pruebas/referencia/diferencias-esperadas.md).
 

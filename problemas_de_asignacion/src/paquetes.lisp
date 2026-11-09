@@ -57,9 +57,16 @@
   (:use :cl :dsl :dsl-ast :analisis)
   (:export #:destino #:destino-modelo #:python #:matematica #:verbalizador
            #:generar-codigo #:simbolo #:emitir-consulta #:emitir-restriccion #:emitir
-           #:nombre-python #:clase-python #:constante-python #:slots-de-etiqueta))
+           #:nombre-python #:clase-python #:constante-python #:slots-de-etiqueta
+           #:linea #:con-sangria))
+
+(defpackage :estrategias
+  (:use :cl :emision)
+  (:export #:estrategia #:estrategia-nombre #:genetico #:busqueda-local #:operador
+           #:emitir-estrategia #:emitir-operador #:argumentos-de #:operadores-de))
 
 (defpackage :orquestacion
   (:use :cl :dsl-ast)
   (:import-from :emision #:emitir #:python #:matematica #:verbalizador)
+  (:import-from :estrategias #:emitir-estrategia #:estrategia-nombre #:genetico #:busqueda-local)
   (:export #:cargar-dominio #:cargar-flujo #:cargar-anotaciones #:exportar))

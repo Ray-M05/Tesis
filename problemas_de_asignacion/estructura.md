@@ -8,14 +8,17 @@ problemas_de_asignacion/
 ├── README.md                        portada: cómo correr y cargar
 ├── estructura.md                    este archivo
 ├── generar.lisp                     genera la salida de los dominios
+├── ejecuciones/README.md            cómo se ejecutan las estrategias y qué es cada argumento
 ├── decisiones-reimplementacion.md   decisiones tomadas y su motivo
 ├── plan-etapa-2.md                  plan de implementación del análisis
 ├── plan-etapa-3.md                  plan de implementación de la emisión
+├── plan-etapa-4.md                  plan de implementación de las estrategias
 ├── src/
 │   ├── paquetes.lisp                los paquetes
 │   ├── dsl/                         el lenguaje
 │   ├── analisis/                    el modelo intermedio
 │   ├── emision/                     Python, LaTeX y prosa
+│   ├── estrategias/                 los programas que buscan un horario
 │   └── orquestacion/                carga de un dominio y escritura de sus archivos
 ├── dominios/<dominio>/dominio.lisp  tv, tesis, docentes, seder, saul
 ├── dominios/saul/verbalizador.lisp  predicados de Saúl
@@ -24,9 +27,11 @@ problemas_de_asignacion/
 │   ├── dsl/                         pruebas del lenguaje
 │   ├── analisis/                    pruebas del modelo intermedio
 │   ├── emision/                     pruebas de las tres salidas
+│   ├── estrategias/                 pruebas de las estrategias
 │   ├── referencia/                  salidas del sistema viejo
 │   └── factibles/                   horarios sin incumplimientos duros
-└── salida/<dominio>/                modelo.py, modelo.tex y descripcion.md; git la ignora
+└── salida/<dominio>/                modelo.py, modelo.tex, descripcion.md, genetico.py,
+                                     busqueda_local.py y corridas/; git la ignora
 ```
 
 ## Dónde está cada lógica
@@ -86,7 +91,7 @@ problemas_de_asignacion/
 | Los avisos | `src/analisis/construir.lisp` | `avisos-de-simetria`, `avisos-de-variables`, `avisos-de-restriccion` |
 | Los dominios del modelo | `src/analisis/construir.lisp` | `dominios-usados` |
 | Cargar las anotaciones de un dominio | `src/orquestacion/cargar.lisp` | `cargar-anotaciones` |
-| Escribir los tres archivos de un dominio | `src/orquestacion/exportar.lisp` | `exportar` |
+| Escribir los archivos de un dominio, también los programas de las estrategias | `src/orquestacion/exportar.lisp` | `exportar` |
 | Generar la salida desde la línea de comandos | `generar.lisp` | `dominios-indicados` |
 | Los destinos | `src/emision/destinos.lisp` | `python`, `matematica`, `verbalizador` |
 | Las funciones que despachan por destino | `src/emision/generar-codigo.lisp` | `generar-codigo`, `simbolo`, `emitir-consulta`, `emitir-restriccion`, `emitir` |
@@ -97,7 +102,8 @@ problemas_de_asignacion/
 | Cómo se nombra una instancia | `src/emision/nombres.lisp` | `slots-de-etiqueta` |
 | La sangría y los bucles de Python | `src/emision/python/expresiones.lisp` | `con-sangria`, `linea`, `emitir-bucles` |
 | Comparar por identidad | `src/emision/python/datos.lisp` | `emitir-clase` |
-| De posiciones a filas | `src/emision/python/datos.lisp` | `emitir-crear-horario` |
+| De posiciones a filas, y lo que las estrategias leen de la identidad y las decisiones | `src/emision/python/datos.lisp` | `emitir-crear-horario` |
+| Qué restricciones son prohibiciones, de una fila o constantes | `src/emision/python/restricciones.lisp` | `prohibicion-dura-p`, `de-una-fila-p`, `emitir-grupos-de-restricciones` |
 | Cuánto vale un choque y cuándo se agrupa | `src/emision/python/consultas.lisp` | `emitir-choque-agrupado`, `agrupable-p` |
 | Cuánto vale cada restricción en Python | `src/emision/python/restricciones.lisp` | `emitir-restriccion` |
 | `RESTRICCIONES` y `evaluar` | `src/emision/python/restricciones.lisp` | `emitir-evaluar` |
@@ -113,6 +119,15 @@ problemas_de_asignacion/
 | La frase de cada restricción, o caer a lo literal | `src/emision/verbalizador/familias.lisp` | `idioma`, `restriccion->prosa` |
 | Las secciones del documento | `src/emision/verbalizador/documento.lisp` | `emitir`, `entidad->prosa`, `datos->prosa`, `etiqueta` |
 | Qué consultas no se listan en «Qué se mide» | `src/emision/verbalizador/documento.lisp` | `mecanicas` |
+| Las funciones que despachan por estrategia y operador | `src/estrategias/estrategia.lisp` | `emitir-estrategia`, `emitir-operador`, `emitir-busqueda`, `operadores-de`, `argumentos-de` |
+| El individuo, el costo con caché y las constantes calculadas una vez | `src/estrategias/estrategia.lisp` | `emitir-comunes` |
+| Los argumentos de un programa y sus valores por defecto | `src/estrategias/estrategia.lisp` | `argumentos-de`, `emitir-argumentos` |
+| El JSON de una corrida | `src/estrategias/estrategia.lisp` | `emitir-principal` |
+| Los tres inicios, la selección, el cruce, las mutaciones y la parada | `src/estrategias/operadores.lisp` | un método de `emitir-operador` por clase |
+| El bucle del genético y la elección de mutación | `src/estrategias/genetico/python.lisp` | `emitir-busqueda`, `emitir-mutar` |
+| El paso de la búsqueda local y su bucle | `src/estrategias/busqueda-local/python.lisp` | `mejor-opcion-de-fila`, `emitir-busqueda` |
+| Qué es cada argumento al ejecutar | `ejecuciones/README.md` | |
+| Los criterios de la etapa 4 y el costo en minutos | `pruebas/estrategias/rendimiento.py` | `main` |
 
 ## Sistema
 
@@ -120,7 +135,7 @@ problemas_de_asignacion/
 |---|---|
 | `problemas_de_asignacion.asd` | Dice qué archivos forman el sistema, en qué orden se cargan y que están en UTF-8. |
 | `generar.lisp` | Guion que escribe `modelo.py`, `modelo.tex` y `descripcion.md` en `salida/<dominio>/`, de todos los dominios o de los que se nombren. |
-| `src/paquetes.lisp` | Define `dsl`, con las 27 palabras que ve un dominio; `dsl-ast`, con la implementación y lo que leen las capas siguientes; `analisis`, con el modelo; y `orquestacion`, con el cargador. |
+| `src/paquetes.lisp` | Define `dsl`, con las 27 palabras que ve un dominio; `dsl-ast`, con la implementación y lo que leen las capas siguientes; `analisis`, con el modelo; `emision`, con los destinos; `estrategias`, con los programas que buscan; y `orquestacion`, con el cargador. |
 
 ## Lenguaje: `src/dsl/`
 
@@ -165,9 +180,9 @@ Traduce el modelo a cada lenguaje. Un destino es una clase, y nadie lee los regi
 | Archivo | Qué hace |
 |---|---|
 | `expresiones.lisp` | Cómo se escribe cada nodo. También la sangría y los bucles, con `i < j` en los pares. |
-| `datos.lisp` | Las clases con `eq=False` y `__str__`, una constante por instancia, las listas en orden declarado y `crear_horario`. |
+| `datos.lisp` | Las clases con `eq=False` y `__str__`, una constante por instancia, las listas en orden declarado, `IDENTIDADES`, `DOMINIOS_DE_DECISION`, `crear_fila` y `crear_horario`. |
 | `consultas.lisp` | El cuerpo con bucles de toda consulta y, en un choque, el recuento por celda cuando es exacto. |
-| `restricciones.lisp` | Una emisión por forma, `RESTRICCIONES` y `evaluar`, que devuelve valores sin ponderar. |
+| `restricciones.lisp` | Una emisión por forma, `RESTRICCIONES` y `evaluar`, que devuelve valores sin ponderar. También las listas de nombres que leen las estrategias: `PROHIBICIONES`, las duras con forma de prohibición; `DE_UNA_FILA`, las que se comprueban con una sola fila; y `CONSTANTES`, las que no dependen de ninguna decisión. |
 | `resultado.lisp` | `_parejas`, `mostrar_resultado`, `a_json` y el archivo completo. |
 
 ### `matematica/`: genera `modelo.tex`
@@ -186,12 +201,23 @@ Traduce el modelo a cada lenguaje. Un destino es una clase, y nadie lee los regi
 | `familias.lisp` | La frase de cada familia y de cada restricción. Si no hay frase, se cae a la capa literal. |
 | `documento.lisp` | Entidades, datos, qué se decide, qué se mide y restricciones. |
 
+## Estrategias: `src/estrategias/`
+
+Cada estrategia escribe un programa de Python que importa `modelo.py` y no sabe nada del dominio. Una estrategia y cada operador son objetos; cada uno escribe su parte con un método.
+
+| Archivo | Qué hace |
+|---|---|
+| `estrategia.lisp` | La clase `estrategia`, con la penalización, los tres inicios y la parada; las funciones genéricas; y lo que toda estrategia escribe igual: el individuo, el evaluador, las opciones permitidas, los argumentos y el JSON de la corrida. |
+| `operadores.lisp` | Las clases de operador y su Python: `inicio-voraz`, `inicio-permitido`, `inicio-aleatorio`, `torneo`, `cruce-un-punto`, `mover-filas`, `intercambio`, `parada-por-limite` y `parada-por-estancamiento`. Cada uno declara sus argumentos. |
+| `genetico/python.lisp` | La clase `genetico`, con sus parámetros y operadores, la elección de mutación y el bucle con elitismo. |
+| `busqueda-local/python.lisp` | La clase `busqueda-local`, su operador `mejor-opcion-de-fila` y su bucle. Está entera en este archivo: añadirla no cambió nada de los anteriores, y el `genetico.py` generado salió idéntico. |
+
 ## Carga y escritura: `src/orquestacion/`
 
 | Archivo | Qué hace |
 |---|---|
 | `cargar.lisp` | `cargar-flujo` crea el paquete `DOMINIO-<NOMBRE>`, carga el dominio con registros nuevos y devuelve su problema, o lo rechaza si no tiene. `cargar-dominio` hace lo mismo desde un archivo en UTF-8 y toma el nombre de la carpeta. |
-| `exportar.lisp` | `exportar` escribe `modelo.py`, `modelo.tex` y `descripcion.md` en una carpeta. Es mínimo: la etapa 5 lo completa. |
+| `exportar.lisp` | `exportar` escribe en una carpeta `modelo.py`, `modelo.tex`, `descripcion.md`, `genetico.py` y `busqueda_local.py`, estos dos con los valores por defecto de sus clases. La etapa 5 decide qué se genera y dónde. |
 
 ## Dominios: `dominios/`
 
@@ -209,7 +235,7 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 
 | Archivo | Qué hace |
 |---|---|
-| `correr.lisp` | Compila el sistema y ejecuta las pruebas de `dsl/`, `analisis/` y `emision/`. Una prueba que falla termina el proceso con código 1. |
+| `correr.lisp` | Compila el sistema y ejecuta las pruebas de `dsl/`, `analisis/`, `emision/` y `estrategias/`. Una prueba que falla termina el proceso con código 1. |
 | `dsl/utiles.lisp` | Dominio base de las pruebas, y los ayudantes `carga` y `rechaza`. `carga` falla ante cualquier aviso. |
 | `dsl/validacion.lisp` | Prueba la lectura de claves y la comprobación de nombres. |
 | `dsl/nodos.lisp` | Prueba los nodos, la jerarquía de dureza, el tamaño del vocabulario, y que no queden accesores de nodos ni nodos borrados. |
@@ -234,7 +260,14 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 | `emision/comparar.py` y `emision/referencia.lisp` | Generan cada dominio y comparan sus valores con el sistema viejo y con los factibles. |
 | `emision/matematica.lisp` | Prueba cada forma en LaTeX y las correcciones de `diferencias-esperadas.md`, y compila si hay `pdflatex`. |
 | `emision/verbalizador.lisp` | Prueba la frase exacta de cada familia, cota y objetivo, y la capa literal. La comparación con la referencia es un informe. |
+| `emision/grupos.lisp` | Prueba `IDENTIDADES`, `DOMINIOS_DE_DECISION`, `crear_fila` y las tres listas de restricciones, y que las opciones permitidas del SEDER y de Saúl sean las del prototipo. |
 | `emision/sin-dominio.lisp` | Prueba que `src/` no contenga símbolos de un dominio. |
+| `estrategias/utiles.lisp` | Un dominio pequeño con prohibición, choque, cota constante y blanda, y la ejecución de un programa con argumentos y la lectura de su JSON. |
+| `estrategias/completitud.lisp` | Prueba que cada operador y estrategia tenga su método primario, que ninguno sea sobre `t`, y que `ejecuciones/README.md` explique todos los argumentos. |
+| `estrategias/comunes.lisp` | Prueba la semilla obligatoria, los tres inicios, el costo, la caché, que una constante se evalúe una vez, que no se copie con `deepcopy` y el voraz en el SEDER. |
+| `estrategias/genetico.lisp` | Prueba la reproducibilidad, cada motivo de parada y que no haya `--estancamiento`, los valores por defecto sacados de los slots, cada operador y las probabilidades del bucle, y 0 duras en tv, tesis y SEDER. |
+| `estrategias/busqueda-local.lisp` | Prueba lo mismo para la búsqueda local, que el paso cambie una fila como mucho a una opción permitida y sin ruido no empeore, y que se devuelva el mejor visto. |
+| `estrategias/rendimiento.py` | Va aparte de `correr.lisp` porque tarda unos 40 minutos. Comprueba los criterios de la etapa 4 sobre `salida/`, compara arranques y estrategias, mide cuánto tarda cada dominio y Saúl con distintas poblaciones y generaciones, y proyecta en minutos lo que costarían corridas e instancias más grandes. |
 | `referencia/<dominio>/` | Lo que produjo el sistema viejo: `dominio.lisp`, `horario.py`, `descripcion.md`, `modelo.txt` y `valores.json`. |
 | `referencia/sistema_viejo.py` | Abre un `horario.py` viejo sin ejecutar el genético, y evalúa sus restricciones sobre un horario. |
 | `referencia/capturar.py` | Escribe `modelo.txt` y `valores.json` de cada dominio. |

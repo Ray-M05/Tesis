@@ -4,6 +4,8 @@
 >
 > **Novedad importante para la PARTE IV:** el verbalizador implementó, sin proponérselo, el reconocedor de patrones que el backend ILP daba por pendiente. Ver **§30.4**, que recoge ocho hallazgos sobre el modelo matemático surgidos al construirlo.
 >
+> **Novedad de noviembre de 2026: la reimplementación por capas (PARTE VII).** El proyecto se rehace en una carpeta nueva, `C:\Pro\tesis\problemas_de_asignacion\`, organizada en cinco capas y con las deficiencias del generador corregidas. La PARTE VII explica qué se busca, dónde están el inventario y el plan, qué se ha decidido y en qué estado está cada etapa. **Varias afirmaciones de este documento y de `base_de_conocimiento.md` quedaron corregidas por esa línea de trabajo; ver §37.**
+>
 > Este documento se llamaba antes `BASE-CONOCIMIENTO-backend-ilp.md` y cubría solo el backend ILP. Se amplió para recoger toda la investigación sobre la tesis, no únicamente esa línea de trabajo. Toda investigación nueva entra aquí.
 
 > **Bases de conocimiento relacionadas.** Para todo lo referido a **Generadores Multilenguajes, la herramienta MGA, los macros `defnode` / `gcode`, la función genérica `generate-code`, la jerarquía de clases de lenguajes de salida y el linaje de trabajos de MATCOM (ADOL\*, LAML, IVNS, GEMURAL)**, consultar [`BASE-CONOCIMIENTO-mga-arcia-2017.md`](BASE-CONOCIMIENTO-mga-arcia-2017.md) — análisis de la tesis de Yasmany Arcia Corcho (UH/MATCOM, 2017), *Automatizar la creación de Generadores Multilenguajes*. Ese documento cubre además la comparación entre MGA y nuestro `clases-macros.lisp`, y qué partes de MGA aplican y cuáles **no** aplican al backend ILP (ver su §9.4).
@@ -198,6 +200,8 @@ Distinción necesaria porque varios ejemplos del capítulo tienen forma de fila 
 ---
 
 ## 6. El cuarto dominio: departamento de profesores
+
+> **No se va a implementar** (decisión D1.9, noviembre de 2026). Se conserva aquí como análisis. Sin él, ningún dominio real suma valores distintos de 1 ni carece de franja temporal, así que §3.1 y §16.9 quedan como argumento sin un dominio que los demuestre.
 
 Problema nuevo planteado por el usuario, no implementado. Reparto de la docencia de un semestre entre los profesores de un departamento.
 
@@ -681,10 +685,22 @@ Al eliminar el párrafo de las cinco naturalezas de los atributos, las tres últ
 37. El usuario fijó un **procedimiento de tres pasos** para incorporar problemas reales: normalizar la descripción al estilo de las ya tratadas, traducirla al DSL sin omitir nada, y verbalizar para comprobar que las dos descripciones apuntan a lo mismo. Documentado en [`flujo-descripcion-a-dsl.md`](../flujo-descripcion-a-dsl.md) y en §31.
 38. Primer caso: el **preuniversitario Saúl**, quinto dominio del proyecto. Paso 1 cerrado, paso 2 bloqueado a la espera de datos.
 39. Hallazgos del paso 1 de Saúl, todos en §31.4: el DSL **no tiene pertenencia** (novena limitación, del modelo de datos); es el **primer dominio con adyacencia sobre un slot variable**; y los tres años no se pueden partir sin romper `colisiones-de-profesor`, lo que convierte el límite de §3.4 en un límite duro (§31.2).
-40. **Sexto dominio: el SEDER de educación física** (§32). Paso 1 cerrado, paso 2 bloqueado. Aporta el primer caso de **capacidad acumulada**, que choca de frente con «cuenta pero no suma» (§3.2). Se acotó el alcance asumiendo que las brigadas no comparten instalación, con la deficiencia anotada.
+40. **Sexto dominio: el SEDER de educación física** ([`base_de_conocimiento.md`](restrictions_language-main/base_de_conocimiento.md), PARTE V). Paso 1 cerrado, paso 2 bloqueado. Aporta el primer caso de **capacidad acumulada**, que choca de frente con «cuenta pero no suma» (§3.2). Se acotó el alcance asumiendo que las brigadas no comparten instalación, con la deficiencia anotada.
 41. El usuario abrió el SEDER **sin cerrar los pasos 2 y 3 de Saúl**. Los dos casos quedan en el mismo estado y ninguno está medido todavía.
 
+### Hilo 6 — inventario de deficiencias y reimplementación por capas
+
+42. Se analizaron juntas las bases de conocimiento, `limitaciones-del-dsl.md` y el código del generador, y se compararon con la tesis de Arcia (MGA). El documento de límites cubría 8 de 33 problemas. Se produjo `informe-deficiencias.pdf`, que contiene un error corregido después (§37, punto 1).
+43. Se concluyó que MGA resuelve la capa de emisión y no la expresividad del lenguaje, y que **no hay que importar `defnode`**: `def-clase` ya cubre más. Se escribió `mga-y-problemas-pendientes.md`.
+44. El usuario fijó el objetivo: **rehacer toda la generación de código sobre funciones genéricas y una jerarquía de destinos, sin nada cableado**, de modo que añadir un lenguaje o una heurística no toque lo existente.
+45. Se reorganizó el inventario por capas en `deficiencias-por-capa.md`. El usuario descartó los problemas de calidad de datos y los que no afectan a ningún dominio trabajado, y pidió fusionar los que dicen lo mismo. Quedaron 30 puntos.
+46. Se corrigió Saúl: dos restricciones blandas estaban escritas con cuantificadores de dura (§37, punto 4).
+47. Se escribió `plan-reimplementacion.md` y se tomaron las decisiones de la etapa 0 (§35).
+48. **Etapa 0 completada** el 2026-11-02 (§36).
+
 ## 23. Próximos pasos posibles (no hechos aún)
+
+> **Desde noviembre de 2026, los pasos sobre el generador están absorbidos por la reimplementación por capas** (PARTE VII): honrar `:devuelve` y el umbral del nppq, la colisión de nombres, el emisor ILP y el dominio del departamento tienen su etapa en [`plan-reimplementacion.md`](plan-reimplementacion.md). Lo que sigue se conserva como historial; el plan es la fuente vigente.
 
 - Prototipar la generación ILP real de un dominio (recomendado: tv) hacia PuLP o MiniZinc, produciendo un `.py`/`.mzn` ejecutable y comparable contra el GA.
 - Implementar los módulos `gen-ilp-*.lisp`.
@@ -1246,3 +1262,333 @@ El documento recoge también el **formato de salida deseado**, que es lo que el 
 ### 31.5 Lo que queda
 
 Recibir los datos de [`datos-saul.md`](../datos-saul.md) y ejecutar los pasos 2 y 3. Después de eso, decidir si el dominio entra en `verbalizador/dominios/` como quinto ejemplo y si `limitaciones-del-dsl.md` se amplía con la novena limitación de §31.4 punto 1.
+
+
+---
+
+# PARTE VII — LA REIMPLEMENTACIÓN POR CAPAS
+
+> **ESTADO: etapa 0 completada el 2026-11-02; etapas 1 a 5 pendientes.** El progreso detallado, archivo por archivo, se registra en [`plan-reimplementacion.md`](plan-reimplementacion.md), en la sección «Progreso» de cada etapa. Esta parte da el contexto y lo que no cabe en el plan: por qué se hace, qué se decidió y qué corrige del análisis anterior.
+
+## 32. Qué es y por qué
+
+El proyecto se rehace en una carpeta nueva, **`C:\Pro\tesis\problemas_de_asignacion\`**, que pasa a ser la carpeta principal de la tesis y se versiona en el repositorio de la raíz. Allí se migra lo que existe en `restrictions_language-main/` y en `verbalizador/`, con las deficiencias del generador corregidas.
+
+**El objetivo**, tal como lo fijó el usuario: rehacer toda la generación de código sobre **funciones genéricas** de CLOS y una **jerarquía de clases de destinos**, es decir, de lenguajes de exportación y de estrategias de resolución. Lo esencial es la modularidad. Añadir un lenguaje o una heurística tiene que ser añadir clases y métodos, sin tocar lo existente, y no puede quedar nada cableado para que funcionen los dominios ya tratados, ni parches.
+
+**La consecuencia que más se busca:** el verbalizador deja de ser un proyecto aparte que copia código y dominios, y pasa a ser un destino más sobre la misma entrada.
+
+**Por qué ahora.** El análisis encontró que los errores más graves no están en el lenguaje sino en el generador, y que muchos son de una clase peligrosa: **no fallan, mienten** (devuelven un número creíble). La causa estructural es la falta de una capa de análisis compartida y de un despacho por destino. Arreglarlos uno a uno sobre el código actual sería parchear; por eso se rehace.
+
+### Documentos de esta línea de trabajo
+
+| Documento | Para qué es |
+|---|---|
+| [`deficiencias-por-capa.md`](deficiencias-por-capa.md) | **El inventario de lo que se quiere arreglar**: 30 deficiencias, numeradas por capa (1.1 a 5.1), con su gravedad y lo que exige a la reimplementación. Es la fuente de verdad del alcance. |
+| [`plan-reimplementacion.md`](plan-reimplementacion.md) | **El plan de trabajo**: estructura de carpetas, una etapa por capa, de dónde se toma cada pieza (archivo y línea), tareas, decisiones con opciones y recomendación, criterios de completado y el progreso de cada etapa. |
+| [`mga-y-problemas-pendientes.md`](mga-y-problemas-pendientes.md) | Qué aporta MGA y qué no, explicado para quien no conoce el proyecto. |
+| `informe-deficiencias.pdf` / `.tex` | El primer análisis, de 16 páginas. **Tiene un error**: recomienda devolver `:accessor` a `def-clase` (§37, punto 1). |
+| [`problemas_de_asignacion/README.md`](problemas_de_asignacion/README.md) | Portada de la carpeta nueva: mapa de capas, cómo correr las pruebas, cómo cargar un dominio y cómo regenerar la referencia. |
+| [`problemas_de_asignacion/estructura.md`](problemas_de_asignacion/estructura.md) | **Dónde está cada lógica** y qué hace cada archivo de la carpeta nueva. |
+| [`problemas_de_asignacion/decisiones-reimplementacion.md`](problemas_de_asignacion/decisiones-reimplementacion.md) | Cada decisión tomada, con su motivo, agrupadas por tema, y lo pendiente a implementar. |
+| [`problemas_de_asignacion/plan-etapa-2.md`](problemas_de_asignacion/plan-etapa-2.md) | Cómo se construyó el análisis: fases, lo esperado de cada restricción y las tablas de rechazos, avisos y consultas genéricas. |
+| [`problemas_de_asignacion/plan-etapa-3.md`](problemas_de_asignacion/plan-etapa-3.md) | Cómo se construyó la emisión: fases, valor de cada restricción y destino de cada función del verbalizador. |
+
+## 33. Las cinco capas
+
+| Capa | Carpeta | Qué hace | MGA |
+|---|---|---|---|
+| 1. Construcción del DSL | `src/dsl/` | macros `def-*`, clases del AST, entidades, instancias, definición del problema | no se adopta `defnode` |
+| 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends: forma de cada restricción, familias, dominios, orden | — |
+| 3. Emisión | `src/emision/` | un destino por lenguaje: Python, LaTeX y prosa en español; más adelante ILP | sin implementar: etapa extra |
+| 4. Estrategias | `src/estrategias/` | cómo se busca la solución: representación, operadores, evaluación, parada | — |
+| 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde | — |
+
+**La capa 2 no existía en el sistema viejo.** Su trabajo estaba repartido entre los emisores y duplicado en el verbalizador, y esa ausencia causaba buena parte de las deficiencias.
+
+**La capa 1 ya está construida.** Lo que la distingue del sistema viejo:
+
+- **Paquetes:** `dsl` solo tiene las 27 palabras que ve un dominio, y `dsl-ast` tiene la implementación. Cada dominio se carga en su paquete con registros nuevos, así que no ve los de otro.
+- **Dureza y peso:** la dureza sale de la jerarquía de clases del cuantificador. Solo las blandas y los objetivos llevan `:peso`.
+- **Consultas:** `def-consulta` crea su nodo y una función. Llamarla devuelve un nodo `aplicacion-de-consulta`, incluso sin parámetros: `(colisiones-de-aula)`.
+- **Restricciones:** los cuantificadores son macros con nombre, `(def-nppq r cond)`, y `:para` liga sus variables sobre uno o varios dominios.
+- **Accesores:** solo los generan las entidades. `def-clase` ya no genera funciones de acceso, y los nodos se leen con `slot-value`.
+- **Errores:** toda entrada mal formada señala `error-dsl`, con un mensaje que nombra el objeto.
+
+**La capa 2 ya está construida.** `construir-modelo` convierte un `problema` en un modelo inmutable, sin estado global:
+
+- **Dos ejes:** cada restricción tiene una forma (`prohibicion`, `cota`, `minimax`, `restriccion-generica`) y cada consulta una familia (`choque-por-parejas`, `relacion-ordenada`, `filtro-de-fila`, `cruce-contra-tabla`, `agrupacion`, `consulta-generica`).
+- **Una comparación guarda dos cosas:** lo escrito, para la prosa, y cuándo se incumple, para el cálculo.
+- **Decisión o dato:** una ruta es decisión si su raíz recorre la combinación y el slot más cercano a la raíz es una variable del problema.
+- **Tipos deducidos:** el tipo de un slot sale de las instancias, y el dominio de un parámetro, de cómo se aplica la consulta. Las comparaciones sin sentido se rechazan.
+- **Avisos:** una lista en el modelo, con cuatro motivos: `:simetrica-sin-pares`, `:pares-con-orden`, `:restriccion-constante` y `:variable-sin-usar`.
+
+**La capa 3 ya está construida.** De un mismo modelo salen `modelo.py`, `modelo.tex` y `descripcion.md`:
+
+- **Sin métodos por defecto:** cada destino es una clase, y `generar-codigo` no tiene ningún método sobre `t`. Un nodo sin traducir es un error, no un `?`.
+- **Python:** compara por identidad (`eq=False`). Un choque se cuenta por celda en tiempo lineal cuando eso es exacto, y si no, con bucles. `evaluar` devuelve valores sin ponderar.
+- **LaTeX:** las duras van como «sujeto a», y el objetivo solo suma las blandas con su peso. La penalización de las duras es de la estrategia.
+- **Verbalizador:** se trasladó sin cambiar su lógica, a `src/emision/verbalizador/`. Sus reconocedores ya estaban en el análisis.
+
+**Cuánto vale cada restricción:** una prohibición, su conteo; una cota, lo que falta para cumplirla, sumado sobre `:para`; un minimax, su máximo; un maximizar, menos su mínimo; una genérica, 1 por cada combinación que incumple. Un choque cuenta cada pareja una vez.
+
+### Relación con MGA
+
+- **De la mitad `defnode` no se importa nada.** `def-clase` ya tiene `:funcion`, `:claves` y `:encadenado`, y además `def-nodos`, `def-jerarquias` y `def-subclases`, que MGA no tiene. Sustituirla rompería el DSL: el nombre de cada slot es un constructor de nodos (`(tope jornada)` construye un nodo de acceso), y `defnode` le daría ese nombre a un accesor.
+- **`gcode` no se ha implementado.** Se decidió dejarlo, junto con la sangría de MGA, para una etapa extra al final del plan: los métodos se escriben con `defmethod`, y nada del sistema depende de MGA. El prototipo, probado sobre el AST real, sigue en el apéndice A del plan, y lee los huecos con `slot-value` en lugar de con accesores.
+- **Nombres en español** (D0.4): `generar-codigo` se parece a `generate-code` de MGA, pero es una función genérica normal.
+- **El límite de MGA, medido:** `gcode` solo cubre la traducción composicional. En el verbalizador eso son 258 líneas (`expr.lisp`) frente a 604 de reconocimiento de familias (`idioms.lisp`): el 70 % del trabajo real queda fuera. En la arquitectura nueva, ese reconocimiento pasa a la capa 2 y lo comparten todos los destinos.
+
+## 34. Principios
+
+Valen para todas las etapas y son la forma práctica de «nada cableado»:
+
+1. Cada capa depende solo de las anteriores.
+2. Lo que varía por destino, por estrategia o por familia de restricción se resuelve con despacho de CLOS, nunca con `case`, `typecase` ni `if` sobre un nombre.
+3. Ningún método por defecto sobre `t`: lo que no está implementado es un error al generar, no un `?` en la salida.
+4. Ningún símbolo, texto o convención de un dominio concreto dentro de `src/`.
+5. La entrada mal formada se rechaza al construir el AST, con su nombre.
+6. Todo es reproducible: misma entrada y misma semilla, misma salida.
+7. Sin dependencias nuevas. ASDF viene con SBCL. Las pruebas son funciones con `assert`.
+
+## 35. Decisiones tomadas
+
+### De dirección, tomadas al construir el inventario
+
+- **Fuera del alcance:** los problemas de calidad de datos, como la errata `Francofonia`/`Francofomia`.
+- **Fuera del inventario**, por no afectar a ningún dominio trabajado o por no producir errores: la expresividad que ningún dominio usa (restricciones globales, decisiones derivadas, agregación anidada, decisión opcional), los slots sin tipo, las consultas auxiliares que se inlinean, el estado global acumulativo y la identidad de entidades por convención de nombre.
+- **Fusionados**, por decir lo mismo: los datos de pares y el cuantificador de un solo dominio (1.4); los cableados de la emisión (3.7); lo que resuelve la jerarquía de destinos (3.3); los errores de la fórmula matemática (3.4); y toda la orquestación en un solo punto (5.1).
+- **Las deficiencias solo llevan gravedad**, sin etiquetas de «nuevo», «parche» o «ejecutado».
+
+### De la etapa 0
+
+| ID | Decisión |
+|---|---|
+| D0.1 | La carpeta se llama `problemas_de_asignacion/`. |
+| D0.2 | `restrictions_language-main/` queda en local, sin versionar, y **no se modifica**. Todo lo que se necesita de él se lee o se copia. |
+| D0.3 | Los documentos de la tesis (`doc/`, bases de conocimiento) los coloca el usuario a mano en la carpeta nueva; el plan no los mueve. |
+| D0.4 | Variables, funciones y carpetas en español. Lo que viene del verbalizador en inglés se traduce al migrarlo. |
+| D0.5 | Archivos en UTF-8 sin BOM. Los comentarios dañados de `clases-macros.lisp` (`Ã¡` en lugar de `á`) se reescriben al migrarlo. |
+| D0.6 | **Docentes y Saúl no se ejecutan** para la referencia: de ellos solo se copian los artefactos. |
+
+### De la etapa 1 (las demás siguen abiertas en el plan)
+
+| ID | Decisión |
+|---|---|
+| D1.1 | La dureza sale del cuantificador. |
+| D1.2 | Las duras no llevan número en el dominio: su penalización es de la estrategia. El peso de las blandas sí define el problema y se queda en el DSL. |
+| D1.3 | Las parejas no ordenadas se declaran con `:pares`, compatible con `:itera-sobre`. |
+| D1.4 | Se escribe `:operacion (contar-distintos (dia c))`, con el atributo obligatorio. |
+| D1.5 | Se cuantifica sobre varios dominios desde ahora, con variables explícitas: `:para (p profesor) (d dia)`. `jornada` se elimina en un paso aparte, y su eliminación cambia tres líneas de la prosa de Saúl. |
+| D1.7 | `frecuencia-exacta` de docentes se deja fuera, porque su conteo lo fijan los datos (§37, punto 11). |
+| D1.6 | Se borran los cinco nodos sin semántica: `comb-entidades`, `lista`, `acceso-a-elemento-de-comb`, `hay-elementos-duplicados` y `pertenece`. |
+| D1.8 | El problema se define con la macro `def-problema` y las claves `:combinacion`, `:identidad`, `:variables` y `:restricciones`. |
+| D1.9 | El dominio departamento no se implementa. |
+| D1.10 | Las anotaciones de un destino van en un archivo por destino, como `verbalizador.lisp`. |
+| D1.11 | Las condiciones reutilizables se escriben con `def-condicion`. `def-consulta` siempre exige iteración. |
+| D1.12 | `:peso` se escribe por clave, con valor 1 por defecto. |
+| D1.13 | `(suma e)` y `(contar-distintos e)`, sin `:devuelve`. Contar se escribe `(suma 1)`. |
+| D1.14 | El cargador crea el paquete de cada dominio. |
+| D1.15 | Una consulta sin parámetros se usa como llamada: `(op-mayor (colisiones-de-aula) 0)`. |
+| D1.16 | Una restricción recibe su nombre en su macro: `(def-nppq r …)`, sin `defvar`. |
+| D1.17 | Los datos de pares se aceptan por ahora como entidades (`plan`, `ausencia`, `indisponibilidad`). 1.4 queda resuelto solo en su parte de cuantificación, y la sintaxis de datos de pares queda pendiente a implementar. |
+| D1.18 | `descripcion.md` y `datos.md` no se crean por dominio; se quedan donde están y los coloca el usuario si los necesita. |
+
+### De la etapa 2
+
+| ID | Decisión |
+|---|---|
+| D2.1 | La familia se representa con dos jerarquías de clases: la forma de la restricción y la familia de la consulta. |
+| D2.2 | Lo que no encaja va a una familia `generica` explícita; un destino que no pueda emitirla da error. |
+| D2.3 | Todo se calcula al construir el modelo, que queda inmutable. |
+| D2.4 | El tipo de un slot se deduce de las instancias. |
+| D2.5 | El análisis rechaza los caminos y las comparaciones sin sentido. |
+| D2.6 | La simetría se detecta intercambiando las dos filas después de aplicar las igualdades de la propia condición. |
+| D2.7 | Los avisos son una lista dentro del modelo. |
+| D2.8 | De una comparación se guardan lo escrito y cuándo se incumple. |
+| D2.9 | El modelo reutiliza los nodos del AST y solo envuelve las consultas. |
+| D2.10 | Los pares simétricos y los ordenados son dos subclases de un padre común. |
+| D2.11 | Se avisa de una restricción que no depende de ninguna decisión, y cada restricción guarda las decisiones que toca. |
+| D2.12 | Un ciclo entre entidades es un error. |
+| D2.13 | Un slot con `nil` o con valores de dos tipos se rechaza. |
+| D2.14 | Una variable declarada sin usar da un aviso, no un error. |
+
+Las decisiones de diseño de las etapas 1 y 2 están con su motivo en `problemas_de_asignacion/decisiones-reimplementacion.md`.
+
+### De la etapa 3
+
+| ID | Decisión |
+|---|---|
+| D3.1 | Un choque cuenta cada pareja una vez: k(k−1)/2 si todas chocan. El valor nuevo es la mitad exacta del viejo. |
+| D3.2 | Un `modelo.py` y un archivo por estrategia que lo importa. |
+| D3.3 | Una instancia se nombra por su único slot de texto; si no lo hay, o hay varios, por todos sus slots. |
+| D3.4 | La salida matemática es solo LaTeX. |
+| D3.5 | El ILP va en una etapa propia, después de la 5. |
+| D3.6 | La sangría es un slot de nivel y la macro `con-sangria`. |
+| D3.7 | Incumplir una cota vale lo que falta para cumplirla: `\|q − umbral\|`, más 1 si la condición de incumplimiento incluye la igualdad. |
+| D3.8 | Se capturan los valores de docentes y Saúl sin ejecutar el genético. Revisa D0.6. |
+| D3.9 | Saúl pierde `numero`. |
+| D3.10 | `contar-distintos` se nombra en prosa por su slot: «fechas distintas». |
+| D3.11 | El tope se escribe «de cada profesor y cada día». |
+| D3.12 | Lo que la prosa sabe del idioma está en `src/`, y lo propio de un dominio en `dominios/<d>/verbalizador.lisp`. |
+| D3.13 a D3.19 | El modelo matemático es completo, con funciones y no binarias, duras como «sujeto a», blandas con requisito y costo, conjuntos por su nombre, consultas nodo por nodo y un fragmento para `\input`. |
+| D3.20 | Lo que quedaba en inglés se tradujo en una fase final: `op-y`, `op-o`, `op-no`, `def-mixin`, `parametros`, `prosa`. |
+
+Además: el verbalizador se traslada sin cambiar su lógica, y un error real se informa al autor; la prosa no tiene que ser idéntica a la referencia; la carpeta, la clase y las anotaciones se llaman `verbalizador`; y MGA queda para una etapa extra.
+
+### De la etapa 4
+
+| ID | Decisión |
+|---|---|
+| D4.1 | El ILP no entra en esta etapa. |
+| D4.2 | Se implementan el genético y la búsqueda local. |
+| D4.3 | Las tres vías de arranque se generan y se elige con `--inicio`, voraz por defecto. |
+| D4.4 | Duras y blandas se combinan con suma ponderada y penalización 1000. |
+| D4.5 | La mutación mueve de 1 a k filas, con k = 2 por defecto, e intercambia. |
+| D4.6 | Los valores prohibidos se quitan solo al arrancar. Quitarlos también al mutar no dio una mejora clara. |
+| D4.7 | Una corrida se detiene sin duras ni blandas, en el máximo de generaciones o por tiempo. **Revisada el 2026-11-08:** el genético ya no se detiene tras 100 generaciones sin mejora, porque en Saúl seguía mejorando. La búsqueda local conserva el estancamiento. |
+| D4.8 | Cada operador es una clase Lisp con un método que escribe su Python. |
+| D4.9 | Valores por defecto en la clase y argumentos al ejecutar. `ejecuciones/` lleva un Markdown que explica cada parámetro. |
+| D4.10 | Solo se dejan de recalcular las restricciones constantes. Agrupar relaciones y la evaluación incremental quedan como trabajo extra. |
+| D4.11 | SEDER: 18 de 20 semillas en 0 duras. Saúl: no más de 17 duras y como mucho 1 evaluación por individuo. Al terminar se calcula el costo en minutos de una corrida más grande. |
+
+Al implementar se decidió además:
+- **Cada argumento es de la pieza que lo usa:** el tamaño del torneo, del torneo; el radio, de `mover-filas`; el ruido, del paso de la búsqueda local; el estancamiento y el tiempo, de la parada.
+- **`modelo.py` da listas de nombres:** `PROHIBICIONES`, `DE_UNA_FILA` y `CONSTANTES`, calculadas de la forma, la familia y las decisiones, nunca por el nombre de una restricción.
+- **Solo cuenta como evaluación un horario completo.** Las comprobaciones del voraz no.
+- **La búsqueda local prueba solo las opciones permitidas de la fila,** incluye la actual entre los candidatos y devuelve el mejor visto.
+
+### De la etapa 5 (falta D5.5)
+
+| ID | Decisión |
+|---|---|
+| D5.1 | Todos los dominios en la misma imagen: el aislamiento ya lo dan el paquete propio y los registros nuevos de cada carga. |
+| D5.2 | `verbalizador/` se deja como está; se encarga el usuario. |
+| D5.4 | Una ejecución se pide por línea de comandos o con un archivo de `ejecuciones/`. |
+| D5.6 | La salida va en una carpeta por destino, y las estrategias con `modelo.py`. |
+| D5.7 | Destinos y estrategias se eligen por el nombre de su clase. |
+| D5.8 | Los avisos del análisis se imprimen y se guardan. |
+| D5.9 | La orquestación ejecuta la búsqueda solo si se pide. |
+| D5.3 | No hay banco de comparación; `rendimiento.py` queda como está. |
+| D5.10–D5.12 | Un archivo de `ejecuciones/` es una lista de Lisp leída sin evaluar, con un dominio, y no se mezcla con la línea de comandos. |
+| D5.13 | Si no se nombra nada, se genera todo. |
+| D5.14 | Las semillas se ejecutan una tras otra. |
+| D5.15 | Al regenerar se sobrescribe lo generado sin borrar la carpeta. |
+| D5.16 | Si un dominio falla, se informa y se sigue. |
+| D5.17 | Los cuatro puntos del verbalizador se revisan al terminar la etapa 5. |
+
+### Trabajo extra
+
+Al final del plan, después de la etapa 5, en `plan-reimplementacion.md`:
+- **Etapa 6 extra, mejorar la búsqueda y la evaluación del genético:**
+  - comprobar la capacidad de Saúl;
+  - agrupar las relaciones ordenadas y la evaluación incremental (D4.10 B y C);
+  - un operador que intercambie dos sesiones del mismo grupo;
+  - encadenar el genético con la búsqueda local;
+  - medir el efecto de D3.7.
+- **Trabajo extra:** MGA, el ILP y los pendientes anotados.
+
+## 36. Estado por etapa
+
+| Etapa | Capa | Estado |
+|---|---|---|
+| 0 | preparación y referencia | **completada** el 2026-11-02 |
+| 1 | DSL | **completada** el 2026-11-05 |
+| 2 | análisis | **completada** el 2026-11-06 |
+| 3 | emisión | **completada** el 2026-11-06 |
+| 4 | estrategias | **completada** el 2026-11-07; el 2026-11-08 se quitó el estancamiento del genético |
+| 5 | orquestación | pendiente |
+
+**Qué dejó la etapa 0**, en `problemas_de_asignacion/pruebas/`:
+
+- **La referencia del sistema viejo** en `referencia/<dominio>/`:
+  - de los cinco dominios: `dominio.lisp`, `horario.py` y la prosa del verbalizador, copiados;
+  - de tesis, tv y SEDER: además el modelo matemático (`modelo.txt`) y diez horarios con semilla fija, con el valor de cada restricción en cada uno (`valores.json`).
+
+  La captura es determinista, y cada horario se reconstruye exacto desde sus índices.
+- **Un horario factible** de tesis, tv y SEDER en `factibles/`, encontrado con una búsqueda local genérica y comprobado con las funciones viejas.
+- **`diferencias-esperadas.md`**: lo que la reimplementación cambia a propósito. Cualquier otra diferencia es un error de la migración.
+
+**Requisito que deja a las etapas siguientes:** el sistema nuevo tiene que conservar el **orden de las instancias** de cada entidad, porque los horarios de referencia están guardados como posiciones dentro de esas listas.
+
+**Qué dejó la etapa 1**, en `problemas_de_asignacion/`:
+
+- **El lenguaje** en `src/dsl/` y el cargador mínimo en `src/orquestacion/cargar.lisp`.
+- **Los cinco dominios** en `dominios/<dominio>/dominio.lisp`, sin envoltura, con `:pares`, `:para` y las operaciones nuevas. Saúl ya no tiene `jornada`.
+- **Las pruebas** en `pruebas/`: `sbcl --script pruebas/correr.lisp` comprueba los rechazos y compara cada dominio con su referencia.
+- **Sin commits:** todo queda en el árbol de trabajo; el usuario decide cuándo versionar.
+
+La migración conserva la forma de cada dominio, pero **sus valores todavía no se han comparado**, porque el sistema aún no genera salida. Eso se hace en la etapa 3. Sobre los comentarios: se quitaron de los dominios los que citaban al generador viejo; `pruebas/dsl/migracion.lisp` sí lo nombra, porque su trabajo es comparar con él.
+
+**Pendiente a implementar:** la sintaxis de datos de pares (1.4). Por ahora `plan`, `ausencia` e `indisponibilidad` siguen siendo entidades (D1.17, §37, punto 13).
+
+**Qué dejó la etapa 2**, en `problemas_de_asignacion/`:
+
+- **El modelo intermedio** en `src/analisis/`, con `construir-modelo` como entrada.
+- **Las pruebas** en `pruebas/analisis/`, con la forma, la consulta, la familia y las decisiones esperadas de las 26 restricciones.
+- **Lo que se comprobó contra la referencia:** las consultas derivadas son las listas `:consultas` viejas, y el orden de las entidades es el de la prosa.
+- **Sin commits**, y sin cambios en los dominios ni en `src/dsl/`.
+
+El modelo **todavía no se ha evaluado**: la comparación de valores y de prosa es de la etapa 3. Nadie llama aún al análisis al cargar un dominio ni muestra los avisos: eso es de la etapa 5.
+
+**Qué dejó la etapa 3**, en `problemas_de_asignacion/`:
+
+- **Los tres destinos** en `src/emision/`, `exportar` en `src/orquestacion/` y `generar.lisp`, que escribe la salida en `salida/<dominio>/` con `sbcl --script generar.lisp`.
+- **Las pruebas** en `pruebas/emision/`, que ejecutan el Python generado y compilan el LaTeX si hay `pdflatex`.
+- **Lo que se comprobó contra la referencia:** 260 valores sobre 50 horarios, y la prosa, que solo difiere en las 6 líneas previstas.
+- **Referencia nueva:** `valores.json` y `modelo.txt` de docentes y Saúl.
+- **Sin commits**, y sin cambios en las copias de la referencia.
+
+**Medido después:** contar parejas ayuda al genético. Sigue sin medir el efecto del exceso de las cotas.
+
+**Qué dejó la etapa 4**, en `problemas_de_asignacion/`:
+
+- **Las estrategias** en `src/estrategias/`: el genético y la búsqueda local, cada una un objeto con sus operadores, que escribe un programa de Python. `generar.lisp` deja en `salida/<dominio>/` `genetico.py` y `busqueda_local.py`, que se ejecutan con `python genetico.py --semilla 0` y guardan cada corrida en `corridas/`.
+- **`modelo.py` cuenta lo que las estrategias necesitan:** la identidad, los dominios de decisión, `crear_fila` y tres listas de restricciones. Las estrategias no saben nada del dominio.
+- **`ejecuciones/README.md`:** qué es cada argumento, su valor por defecto y ejemplos.
+- **Las pruebas** en `pruebas/estrategias/`, y `rendimiento.py` aparte, que tarda unos 15 minutos.
+- **Resultados, sin estancamiento:** SEDER en 0 duras en 20 de 20 semillas, con cualquier arranque; Saúl en 14, 10 y 14 con el genético, en 4,6 min, y en 6 con la búsqueda local en 120 s; 0,87 evaluaciones por individuo. La prueba de mutación detectó los 72 cambios.
+- **Cuánto cuesta más:** Saúl tarda 4,6 min con 500 generaciones y población 100 y 17,9 con 2 000, medidos; 85 min con 10 000 y 433 con 10 000 y población 500, proyectados. Con 5 veces más filas, 500 generaciones costarían unos 55 min. Las tablas están en `plan-etapa-4.md`.
+- **Revisado el 2026-11-08:** el estancamiento de 100 generaciones cortaba mejoras reales en Saúl, de 17 a 14 duras, y se quitó del genético. Las mejoras de la búsqueda que quedaron fuera forman la etapa 6 extra.
+- **Sin commits.**
+
+## 37. Lo que esta línea de trabajo corrigió del análisis anterior
+
+Afirmaciones de este documento, de `base_de_conocimiento.md` o del primer informe que resultaron falsas o incompletas. **Prevalece lo que dice esta sección.**
+
+1. **El `typecase` no era la única salida, y no hay que devolver `:accessor` a `def-clase`.** CLOS despacha por la clase del nodo, no por sus accesores, así que los métodos funcionan leyendo con `slot-value`. Añadir `:accessor` no serviría: el `defun` que genera `def-clase` lo pisa sin avisar. `informe-deficiencias.pdf` dice lo contrario y está equivocado en ese punto.
+2. **La comparación por valor no es una limitación del lenguaje, es una decisión del emisor** (corrige `base_de_conocimiento.md` §7). El serializador escribe cada referencia como un objeto nuevo (`Sesion(plan=Plan(grupo=Grupo(...)))`), y las clases se emiten como `@dataclass(unsafe_hash=True)`. En el Python generado no hay identidad compartida, y la igualdad por valor es lo único que hace funcionar las comparaciones. Los campos añadidos para distinguir instancias son parches.
+3. **Cuantificar sobre la identidad no genera Python roto: devuelve 0 en silencio** (corrige `base_de_conocimiento.md` §19). La clase `Horario` declara el campo, pero nadie lo llena. Comprobado: una restricción imposible da 0 incumplimientos.
+4. **Saúl tenía dos restricciones blandas escritas como duras.** `restriccion-evitar-primer-turno-a-los-lejanos` y `restriccion-tope-diario-de-profesor` estaban en la lista de blandas, pero escritas con `def-nppq` y `def-tqpq`. Se cambiaron a `def-ndpq` y `def-sbqp` en las tres copias del dominio. El costo no cambia y la prosa queda idéntica. Al corregirlo apareció otro error: el emisor matemático no niega los `ndpq`, así que R10 se imprime como la condición prohibida.
+5. **Respetar el umbral del nppq no basta para que desaparezca `jornada`** (corrige `base_de_conocimiento.md` §13). El tope es por profesor **y** día, así que hace falta además cuantificar sobre dos dominios (D1.5).
+6. **Saúl también cuenta doble los choques**, en tres consultas. Son diez consultas en total: dos de tesis, tres de docentes, tres de Saúl y dos del SEDER.
+7. **El traductor matemático no conoce las referencias a entidad.** `(tope jornada)` sale como `tope(?)`, y le pasa lo mismo a `frecuencia`. Reproducido con SBCL y visible en el modelo real de Saúl.
+8. **El DSL acepta entradas mal formadas sin quejarse.** Comprobado: con `:comprueva` en vez de `:comprueba`, la consulta pierde su condición y cuenta todas las filas; con un argumento de menos, el slot sale `None`; y una consulta que no se lista en `:consultas` produce `consulta_desconocida(horario)`, que falla al ejecutar.
+9. **Los dominios actuales no usan umbrales distintos de 0 ni sumas distintas de 1.** Corregir el umbral y la suma no cambia ningún valor de la referencia.
+10. **Una búsqueda local simple resuelve el SEDER en 12 segundos**, y el genético viejo no lo resuelve nunca. Confirma que el atasco es de la vecindad del operador de mutación, no del problema.
+11. **`frecuencia-exacta` no restringe ninguna decisión** (corrige §4 y la recomendación inicial de D1.5). Tal como está escrita en docentes da 10 incumplimientos en cualquier horario: cada asignatura se imparte a cinco grupos, así que su conteo es cinco veces su frecuencia. Cuantificada por asignatura y grupo daría siempre 0, porque cada sesión es una identidad con una sola fila. La R9 de Saúl (`sesiones-del-plan`) tiene el mismo carácter.
+12. **Docentes tiene 70 sesiones, no 65** (corrige §3.4, §4 y §15.6). Sus variables binarias conjuntas son 70·6·5·6 = 12 600, no unas 11 700.
+13. **La sintaxis de datos de pares no cambia la búsqueda del genético.** Los datos no son genes, así que los candidatos y sus costos son los mismos. Medido en el genético viejo, cambiando el bucle sobre la entidad por una búsqueda directa, con la misma semilla: SEDER (población 20, 15 generaciones) y Saúl (población 6, 2 generaciones) dan el mismo costo y el mismo horario. El tiempo apenas cambia: esa restricción es el 5,8 % de una evaluación en el SEDER y el 0,1 % en Saúl. Lo caro son los choques: `restriccion_una_sesion_por_profesor` es el 78 % en Saúl y `restriccion_un_profesor_por_turno` el 80 % en el SEDER. El valor del 1.4 es de expresividad.
+14. **Sacar los valores prohibidos del dominio de cada identidad sí puede ayudar a buscar, y no necesita sintaxis nueva.** En el SEDER, leyéndolos de `indisponibilidad`, con población 30 y 60 generaciones, las duras incumplidas por semilla pasan de 3, 3, 2, 1, 3 a 0, 0, 1, 1, 0, en el mismo tiempo. Son 5 semillas en un solo dominio: es un indicio, no un resultado.
+15. **`decision-path-p` del verbalizador no mira la raíz.** Solo mira el nombre del slot, así que `(dia a)` sobre `ausencia` contaría como decisión. No cambia la prosa actual, porque solo se usa con parejas de filas del horario. La capa 2 exige que la raíz recorra la combinación.
+16. **La simetría no se puede comparar como texto** (corrige el plan inicial de la etapa 2). `repeticiones-en-el-dia` filtra `admite-doble` solo en `u1`, y aun así es simétrica, porque otra igualdad dice que las dos filas tienen el mismo plan. Comparando el texto, el aviso saltaría por error en Saúl.
+17. **Una sola lista de familias mezclaba dos ejes** (corrige el plan inicial de la etapa 2). `minimax` es una forma de restricción, y `agrupacion` es una familia de consulta: el objetivo de tv es un minimax sobre un par ordenado. Medido: 19 prohibiciones, 5 minimax y 2 cotas; 10 choques, 6 agrupaciones, 5 filtros, 3 relaciones ordenadas y 2 cruces.
+18. **`restriccion-frecuencia-exacta` de Saúl tampoco restringe ninguna decisión**, igual que la de docentes (punto 11). Los 102 planes siempre cumplen y gasta 102 × 297 = 30 294 comparaciones por evaluación. Se conserva por fidelidad con la descripción, y el análisis avisa.
+19. **Un ciclo entre entidades casi no se puede crear.** Cada instancia necesita que la otra ya exista, así que la primera tendría que tener `nil` en ese slot, y eso ya se rechaza. Solo se llega rellenando el slot con `setf` después de crear la instancia.
+20. **En docentes, dos clases del mismo grupo en la misma aula, día y turno no incumplen nada.** Cada una de las tres condiciones exige algo distinto. Es la forma descrita en §12, «packing con presencia», y por eso el exceso k−1 de D3.1 no es exacto en esas consultas. Sale de leer las condiciones; no se ha ejecutado.
+21. **Contar parejas es mejor que contar el exceso** (corrige la recomendación inicial de D3.1). `(suma 1)` y la prosa dicen pares, y en los cinco dominios los 10 choques son duros, así que para un ILP basta que sean cero. El valor nuevo es la mitad exacta del viejo en todo horario, lo que da una comprobación fuerte.
+22. **Evaluar docentes y Saúl no era caro** (corrige D0.6). Una evaluación cuesta 0,01 s y 1 s con el sistema viejo; lo caro era buscar. Por eso sus valores sí se capturaron.
+23. **No todas las instancias iguales tienen un campo que las distinga** (corrige `diferencias-esperadas.md`). Docentes tiene 20 sesiones iguales campo a campo, aunque ninguna consulta las compara directamente.
+24. **`defclass*` no viene de MGA**, sino del DSL viejo. Por eso también se tradujo: es `def-mixin`.
+25. **El genético viejo sí resuelve a veces el SEDER** (corrige el punto 10). Llegó a 0 duras en 2 de 3 semillas con 100 generaciones. El atasco ocurre en algunas corridas, y contar doble era buena parte del problema: con parejas, 15 de 20 semillas en una mediana de 29 generaciones, frente a 12 de 20 en 259. Mover dos filas sube a 18 de 20.
+26. **El arranque pesa más que la mutación.** En Saúl, tras 90 s, 207–223 duras al azar y 148–159 con valores permitidos, frente a 11–17 de un arranque voraz en unos 30 s. Ningún método ha llegado a 0, y no se sabe si Saúl tiene solución. Lo mejor medido son 6 duras.
+27. **Quitar valores prohibidos al mutar era especulación.** Medido, no da una mejora clara: 111,5 frente a 118,7 duras con rangos solapados, y 14,2 frente a 13,8 con arranque voraz.
+28. **`copy.deepcopy` es incompatible con la comparación por identidad.** Copia también las instancias, y dos «lunes» dejan de ser iguales. Un individuo se guarda como posiciones.
+29. **En Saúl, la búsqueda local es mucho mejor que el genético.** Con 120 s llega a 6 duras en las tres semillas, frente a 11–17 del genético. Es lo mismo que lo mejor medido con el prototipo. Que tres semillas den exactamente 6 sugiere un mínimo difícil de cruzar con pasos de una fila, pero no prueba que no haya solución.
+30. **El estancamiento de 100 generaciones cortaba mejoras reales en Saúl** (contradecía el criterio «sin cortar el progreso» del plan). Sin él, 500 generaciones bajan de 17 a 14 duras. En tesis y docentes no se perdía nada, y en el SEDER, una blanda en una semilla. Por eso se quitó del genético: 100 generaciones sin mejora no eran un estancamiento real.
+31. **El SEDER lo resuelve el voraz solo.** Para ver lo que aporta el genético hay que arrancar al azar, como el viejo: entonces llega a 0 en 19 de 20 semillas, frente a 2 de 3.
+32. **El voraz de Saúl tarda 14 s,** no los 30 del prototipo.
+33. **El costo de evaluar crece más que las filas:** 7,2 ms con 297, 20,2 con el doble y 96,3 con cinco veces más. Lo causa `turno_doble_consecutivo`, que compara todas las parejas. Es lo que ataca la opción B de D4.10.
+34. **Las opciones permitidas son lo que hace barata la búsqueda local.** Docentes no tiene ninguna restricción de una fila, así que cada paso prueba todas las opciones de aula, día y turno, y la corrida tarda 137 s, frente a 6 s en el SEDER.
+35. **Una prueba de mutación encuentra pruebas que faltan.** De 67 cambios, solo sobrevivieron dos en la primera pasada, y los dos señalaban algo sin probar: que el programa arranque con las opciones permitidas y que los valores por defecto sean los del plan.
+36. **En Saúl, con el mismo tiempo, más población rinde más que más generaciones.** En 9,1 min, población 200 con 500 generaciones da 11 duras, y población 50 con 2 000 da 14. Población 100 con 2 000 y población 500 con 500 dan las dos 11. Es una semilla.

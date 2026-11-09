@@ -64,6 +64,34 @@
 (defmethod emitir-restriccion ((restriccion restriccion-generica) (destino python) stream)
   (emitir-generica (restriccion-nodo restriccion) restriccion destino stream))
 
+(defgeneric prohibicion-dura-p (restriccion)
+  (:documentation "Dice si la restricción es una prohibición dura: tiene sentido en un horario a medias."))
+
+(defmethod prohibicion-dura-p ((restriccion restriccion-m)) nil)
+(defmethod prohibicion-dura-p ((restriccion prohibicion)) (null (restriccion-peso restriccion)))
+
+(defgeneric de-una-fila-p (consulta)
+  (:documentation "Dice si la consulta se puede comprobar mirando una sola fila."))
+
+(defmethod de-una-fila-p ((consulta consulta-m)) nil)
+(defmethod de-una-fila-p ((consulta filtro-de-fila)) t)
+(defmethod de-una-fila-p ((consulta cruce-contra-tabla)) t)
+
+(defun emitir-grupos-de-restricciones (destino stream)
+  "Define las listas de nombres que usan las estrategias: prohibiciones, las de una fila y las constantes."
+  (let* ((restricciones (modelo-restricciones (destino-modelo destino)))
+         (prohibiciones (remove-if-not #'prohibicion-dura-p restricciones)))
+    (flet ((nombres (lista)
+             (mapcar (lambda (restriccion) (nombre-python (restriccion-nombre restriccion))) lista)))
+      (linea destino stream "PROHIBICIONES = [~{~s~^, ~}]" (nombres prohibiciones))
+      (linea destino stream "DE_UNA_FILA = [~{~s~^, ~}]"
+             (nombres (remove-if-not (lambda (restriccion)
+                                       (every #'de-una-fila-p (restriccion-consultas restriccion)))
+                                     prohibiciones)))
+      (linea destino stream "CONSTANTES = [~{~s~^, ~}]"
+             (nombres (remove-if #'restriccion-decisiones restricciones)))
+      (terpri stream))))
+
 (defun emitir-evaluar (destino stream)
   "Define la tabla de restricciones, con peso None en las duras, y evaluar."
   (linea destino stream "RESTRICCIONES = [")
@@ -75,6 +103,7 @@
                nombre (if peso (codigo peso destino) "None") nombre))))
   (linea destino stream "]")
   (terpri stream)
+  (emitir-grupos-de-restricciones destino stream)
   (linea destino stream "def evaluar(horario):")
   (con-sangria (destino)
     (linea destino stream "return {nombre: funcion(horario) for nombre, _, funcion in RESTRICCIONES}"))

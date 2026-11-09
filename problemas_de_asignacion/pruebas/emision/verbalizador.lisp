@@ -358,7 +358,13 @@
               "\\subsubsection*{Sujeto a}")
     (contiene (uiop:read-file-string (merge-pathnames "modelo.py" carpeta)
                                      :external-format :utf-8)
-              "def evaluar(horario):")))
+              "def evaluar(horario):")
+    (contiene (uiop:read-file-string (merge-pathnames "genetico.py" carpeta)
+                                     :external-format :utf-8)
+              "def cruce_un_punto(")
+    (contiene (uiop:read-file-string (merge-pathnames "busqueda_local.py" carpeta)
+                                     :external-format :utf-8)
+              "def mejor_opcion_de_fila(")))
 
 ;; Unas anotaciones mal formadas se rechazan.
 (con-carpeta (carpeta)

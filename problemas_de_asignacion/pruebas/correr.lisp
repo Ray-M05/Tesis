@@ -14,7 +14,10 @@
                    "analisis/simetria" "analisis/familias" "analisis/normalizar"
                    "analisis/orden" "analisis/modelo"
                    "emision/utiles" "emision/completitud" "emision/python" "emision/referencia"
-                   "emision/matematica" "emision/verbalizador" "emision/sin-dominio"))
+                   "emision/matematica" "emision/verbalizador" "emision/grupos"
+                   "emision/sin-dominio"
+                   "estrategias/utiles" "estrategias/completitud" "estrategias/comunes"
+                   "estrategias/genetico" "estrategias/busqueda-local"))
   (load (merge-pathnames (concatenate 'string archivo ".lisp") *pruebas*)
         :external-format :utf-8)
   (format t "ok ~a~%" archivo))
