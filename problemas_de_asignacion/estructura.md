@@ -1,6 +1,6 @@
 # Estructura del proyecto
 
-Qué hace cada archivo y dónde está cada lógica. Las capas que todavía no existen no aparecen.
+Qué hace cada archivo y dónde está cada lógica.
 
 ```
 problemas_de_asignacion/
@@ -9,17 +9,13 @@ problemas_de_asignacion/
 ├── estructura.md                    este archivo
 ├── generar.lisp                     única entrada: genera y, si se pide, ejecuta
 ├── ejecuciones/README.md            cómo se pide una ejecución y qué es cada argumento
-├── ejecuciones/<nombre>.lisp        pedidos guardados para repetirlos; hoy, seder.lisp
+├── ejecuciones/<nombre>.lisp        pedidos guardados para repetirlos
 ├── decisiones-reimplementacion.md   decisiones tomadas y su motivo
-├── plan-etapa-2.md                  plan de implementación del análisis
-├── plan-etapa-3.md                  plan de implementación de la emisión
-├── plan-etapa-4.md                  plan de implementación de las estrategias
-├── plan-etapa-5.md                  plan de implementación de la orquestación
 ├── src/
 │   ├── paquetes.lisp                los paquetes
 │   ├── dsl/                         el lenguaje
 │   ├── analisis/                    el modelo intermedio
-│   ├── emision/                     Python, LaTeX y prosa
+│   ├── emision/                     Python, LaTeX y Verbalizador
 │   ├── estrategias/                 los programas que buscan un horario
 │   └── orquestacion/                el pedido, la carga, la escritura y la ejecución
 ├── dominios/<dominio>/dominio.lisp  tv, tesis, docentes, seder, saul
@@ -38,105 +34,6 @@ problemas_de_asignacion/
                                      verbalizador/descripcion.md
 ```
 
-## Dónde está cada lógica
-
-| Si buscas… | Está en | Función o macro |
-|---|---|---|
-| El vocabulario que ve un dominio | `src/paquetes.lisp` | paquete `dsl` |
-| Lo que leen las capas siguientes | `src/paquetes.lisp` | paquete `dsl-ast` |
-| El tipo de error del lenguaje | `src/dsl/validacion.lisp` | `error-dsl`, `rechazar` |
-| Qué nombres puede usar un dominio | `src/dsl/validacion.lisp` | `exigir-nombre-propio`, `exigir-nombre-nuevo` |
-| Que una variable no se repita | `src/dsl/validacion.lisp` | `exigir-variables` |
-| Cómo se leen las claves `:x v v` | `src/dsl/validacion.lisp` | `repartir-claves`, `valor-unico` |
-| Cómo se definen las clases de nodos | `src/dsl/macros-clase.lisp` | `def-clase`, `def-nodos`, `def-jerarquias`, `def-subclases` |
-| Qué nodos existen | `src/dsl/nodos.lisp` | las clases del AST |
-| De dónde sale la dureza | `src/dsl/nodos.lisp` | `restriccion-dura`, `restriccion-blanda`, `objetivo` |
-| Los registros de un dominio | `src/dsl/entidades.lisp` | `*slots-de-entidad*`, `*instancias-de-entidad*` y demás |
-| Que un dominio no vea los registros de otro | `src/dsl/entidades.lisp` | `con-registros-nuevos` |
-| Que un dominio de iteración exista | `src/dsl/entidades.lisp` | `exigir-dominio`, `exigir-iteradores` |
-| Los mixins | `src/dsl/entidades.lisp` | `def-mixin`, `slots-de-padres` |
-| Definir una entidad o una combinación | `src/dsl/entidades.lisp` | `def-entidad`, `def-comb`, `formas-de-entidad` |
-| Las funciones de acceso, como `(dia u)` | `src/dsl/entidades.lisp` | `formas-de-accesores` |
-| Crear una instancia, su aridad y su nombre | `src/dsl/entidades.lisp` | `expandir-instancia` |
-| Definir y validar una consulta | `src/dsl/consultas.lisp` | `def-consulta`, `expandir-consulta` |
-| Validar `:pares` | `src/dsl/consultas.lisp` | `exigir-pares` |
-| Validar `:operacion` | `src/dsl/consultas.lisp` | `exigir-operacion` |
-| Ligar cada variable a su símbolo | `src/dsl/consultas.lisp` | `ligar-variables` |
-| Usar una consulta, sus argumentos y que no esté dentro de otra | `src/dsl/consultas.lisp` | `aplicar-consulta` |
-| Las condiciones reutilizables | `src/dsl/consultas.lisp` | `def-condicion` |
-| Los seis cuantificadores | `src/dsl/restricciones.lisp` | `def-nppq`, `def-tqpq`, `def-ndpq`, `def-sbqp`, `def-minimizar`, `def-maximizar` |
-| `:para` y la definición de una restricción | `src/dsl/restricciones.lisp` | `expandir-restriccion` |
-| `:peso` | `src/dsl/restricciones.lisp` | `valor-de-peso` |
-| Que un objetivo exija `:para` | `src/dsl/restricciones.lisp` | método `initialize-instance` sobre `objetivo` |
-| Definir el problema | `src/dsl/problema.lisp` | `def-problema`, `construir-problema` |
-| Que la combinación sea identidad más variables, sin dominios vacíos | `src/dsl/problema.lisp` | `exigir-combinacion` |
-| Que cada restricción exista y no se repita | `src/dsl/problema.lisp` | `resolver-restricciones` |
-| La foto de entidades, slots e instancias | `src/dsl/problema.lisp` | `foto-de`, clase `problema` |
-| Cargar un dominio en su paquete | `src/orquestacion/cargar.lisp` | `cargar-dominio`, `cargar-flujo` |
-| Convertir un problema en su modelo | `src/analisis/construir.lisp` | `construir-modelo` |
-| Las clases del modelo | `src/analisis/modelo.lisp` | `modelo`, `aviso`, `restriccion-m`, `consulta-m` y sus subclases |
-| Qué contiene cada nodo | `src/analisis/recorrido.lisp` | `hijos`, `recorrer` |
-| Buscar nodos dentro de otro | `src/analisis/recorrido.lisp` | `nodos-de`, `aplanar` |
-| Unir `:itera-sobre` y `:pares` | `src/analisis/tipos.lisp` | `iteradores-de` |
-| A qué apunta un slot, y el rechazo de `nil` | `src/analisis/tipos.lisp` | `tipos-de-slots`, `tipo-de-valor` |
-| El dominio de un parámetro | `src/analisis/tipos.lisp` | `dominios-de-parametros` |
-| Las comparaciones sin sentido | `src/analisis/tipos.lisp` | `tipo-de` |
-| Lógica en restricciones, número en objetivos | `src/analisis/tipos.lisp` | `tipo-exigido`, `exigir-tipos` |
-| Si una ruta es decisión o dato | `src/analisis/atomos.lisp` | `decision-de`, `slot-de-decision` |
-| Qué decisiones toca algo | `src/analisis/atomos.lisp` | `decisiones-de` |
-| El papel de cada comparación de una pareja | `src/analisis/atomos.lisp` | `papel-de` |
-| Si una condición es simétrica | `src/analisis/simetria.lisp` | `simetrica-p`, `canonica` |
-| La celda y la clave de una pareja | `src/analisis/familias.lisp` | `datos-de-pareja` |
-| A qué familia pertenece una consulta | `src/analisis/familias.lisp` | `clase-de-consulta`, `clasificar-consulta` |
-| Cuándo se incumple una restricción | `src/analisis/normalizar.lisp` | `incumplimiento-de`, `negado`, `simplificar-incumplimiento` |
-| Si es prohibición, cota, minimax o genérica | `src/analisis/normalizar.lisp` | `forma-de`, `normalizar-restriccion` |
-| A qué entidades apunta cada una | `src/analisis/orden.lisp` | `referencias` |
-| El orden de las entidades, y los ciclos | `src/analisis/orden.lisp` | `orden-topologico` |
-| Los avisos | `src/analisis/construir.lisp` | `avisos-de-simetria`, `avisos-de-variables`, `avisos-de-restriccion` |
-| Los dominios del modelo | `src/analisis/construir.lisp` | `dominios-usados` |
-| Cargar las anotaciones de un dominio | `src/orquestacion/cargar.lisp` | `cargar-anotaciones` |
-| Qué destinos y estrategias existen, y elegirlos por nombre | `src/orquestacion/elegir.lisp` | `clases-hoja`, `elegir` |
-| Escribir cada destino en su carpeta, y los programas en la de python | `src/orquestacion/exportar.lisp` | `exportar`, `carpeta-de` |
-| Leer la línea de comandos o un archivo de `ejecuciones/` | `src/orquestacion/pedido.lisp` | `pedido-de-argumentos`, `pedido-de-archivo` |
-| Revisar nombres y parámetros antes de generar | `src/orquestacion/conducir.lisp` | `resolver`, `revisar-parametros` |
-| Generar un dominio, guardar sus avisos y ejecutar sus corridas | `src/orquestacion/conducir.lisp` | `conducir`, `generar-dominio`, `escribir-avisos`, `ejecutar` |
-| La entrada desde la terminal | `generar.lisp` | |
-| Qué archivo escribe cada destino | junto al `emitir` de cada destino | `archivo-de` |
-| Los destinos | `src/emision/destinos.lisp` | `python`, `matematica`, `verbalizador` |
-| Las funciones que despachan por destino | `src/emision/generar-codigo.lisp` | `generar-codigo`, `simbolo`, `emitir-consulta`, `emitir-restriccion`, `emitir` |
-| Lo que se suma cuando una cota se incumple con igualdad | `src/emision/generar-codigo.lisp` | `margen-de-incumplimiento` |
-| Cuándo se incumple o se cumple un cuantificador | `src/emision/generar-codigo.lisp` | `condicion-incumplida`, `condicion-exigida` |
-| Identificadores de Python y palabras reservadas | `src/emision/nombres.lisp` | `nombre-python`, `clase-python`, `constante-python` |
-| Que dos nombres no choquen en Python | `src/emision/nombres.lisp` | `exigir-nombres-distintos` |
-| Cómo se nombra una instancia | `src/emision/nombres.lisp` | `slots-de-etiqueta` |
-| La sangría y los bucles de Python | `src/emision/python/expresiones.lisp` | `con-sangria`, `linea`, `emitir-bucles` |
-| Comparar por identidad | `src/emision/python/datos.lisp` | `emitir-clase` |
-| De posiciones a filas, y lo que las estrategias leen de la identidad y las decisiones | `src/emision/python/datos.lisp` | `emitir-crear-horario` |
-| Qué restricciones son prohibiciones, de una fila o constantes | `src/emision/python/restricciones.lisp` | `prohibicion-dura-p`, `de-una-fila-p`, `emitir-grupos-de-restricciones` |
-| Cuánto vale un choque y cuándo se agrupa | `src/emision/python/consultas.lisp` | `emitir-choque-agrupado`, `agrupable-p` |
-| Cuánto vale cada restricción en Python | `src/emision/python/restricciones.lisp` | `emitir-restriccion` |
-| `RESTRICCIONES` y `evaluar` | `src/emision/python/restricciones.lisp` | `emitir-evaluar` |
-| Lo que imprime y exporta el resultado | `src/emision/python/resultado.lisp` | `emitir-mostrar-resultado`, `emitir-a-json` |
-| Escribir LaTeX | `src/emision/matematica/expresiones.lisp` | `texto-latex`, `conjunto-latex` |
-| La definición de una consulta en LaTeX | `src/emision/matematica/modelo.lisp` | `definicion`, `lineas-de-condicion` |
-| Lo que exige y lo que cuesta una restricción en LaTeX | `src/emision/matematica/modelo.lisp` | `requisito`, `valor` |
-| Género, número y ortografía | `src/emision/verbalizador/lexico.lisp` | `nombre-prosa`, `genero`, `sintagma` |
-| Los predicados de un dominio | `src/emision/verbalizador/lexico.lisp` | `frase-de-predicado` |
-| La traducción nodo a nodo a español | `src/emision/verbalizador/expresiones.lisp` | `generar-codigo`, `consulta->prosa`, `restriccion-literal` |
-| Acortar «el plan de la sesión de u» a «su plan» | `src/emision/verbalizador/expresiones.lisp` | `acceso->prosa`, `acortable-p` |
-| La frase de cada familia | `src/emision/verbalizador/familias.lisp` | `oracion`, `sustantivo` |
-| La frase de cada restricción, o caer a lo literal | `src/emision/verbalizador/familias.lisp` | `idioma`, `restriccion->prosa` |
-| Las secciones del documento | `src/emision/verbalizador/documento.lisp` | `emitir`, `entidad->prosa`, `datos->prosa`, `etiqueta` |
-| Qué consultas no se listan en «Qué se mide» | `src/emision/verbalizador/documento.lisp` | `mecanicas` |
-| Las funciones que despachan por estrategia y operador | `src/estrategias/estrategia.lisp` | `emitir-estrategia`, `emitir-operador`, `emitir-busqueda`, `operadores-de`, `argumentos-de` |
-| El individuo, el costo con caché y las constantes calculadas una vez | `src/estrategias/estrategia.lisp` | `emitir-comunes` |
-| Los argumentos de un programa y sus valores por defecto | `src/estrategias/estrategia.lisp` | `argumentos-de`, `emitir-argumentos` |
-| El JSON de una corrida | `src/estrategias/estrategia.lisp` | `emitir-principal` |
-| Los tres inicios, la selección, el cruce, las mutaciones y la parada | `src/estrategias/operadores.lisp` | un método de `emitir-operador` por clase |
-| El bucle del genético y la elección de mutación | `src/estrategias/genetico/python.lisp` | `emitir-busqueda`, `emitir-mutar` |
-| El paso de la búsqueda local y su bucle | `src/estrategias/busqueda-local/python.lisp` | `mejor-opcion-de-fila`, `emitir-busqueda` |
-| Qué es cada argumento al ejecutar | `ejecuciones/README.md` | |
-| Los criterios de la etapa 4 y el costo en minutos | `pruebas/estrategias/rendimiento.py` | `main` |
 
 ## Sistema
 
@@ -219,7 +116,7 @@ Cada estrategia escribe un programa de Python que importa `modelo.py` y no sabe 
 | `estrategia.lisp` | La clase `estrategia`, con la penalización, los tres inicios y la parada; las funciones genéricas; y lo que toda estrategia escribe igual: el individuo, el evaluador, las opciones permitidas, los argumentos y el JSON de la corrida. |
 | `operadores.lisp` | Las clases de operador y su Python: `inicio-voraz`, `inicio-permitido`, `inicio-aleatorio`, `torneo`, `cruce-un-punto`, `mover-filas`, `intercambio`, `parada-por-limite` y `parada-por-estancamiento`. Cada uno declara sus argumentos. |
 | `genetico/python.lisp` | La clase `genetico`, con sus parámetros y operadores, la elección de mutación y el bucle con elitismo. |
-| `busqueda-local/python.lisp` | La clase `busqueda-local`, su operador `mejor-opcion-de-fila` y su bucle. Está entera en este archivo: añadirla no cambió nada de los anteriores, y el `genetico.py` generado salió idéntico. |
+| `busqueda-local/python.lisp` | La clase `busqueda-local`, su operador `mejor-opcion-de-fila` y su bucle. |
 
 ## Orquestación: `src/orquestacion/`
 
@@ -244,21 +141,3 @@ Cada `dominio.lisp` es la única fuente de su problema y solo lo describe: entid
 | `docentes/` | horario docente universitario | 108 | 4 |
 | `seder/` | educación física del SEDER | 76 | 6 |
 | `saul/` | preuniversitario Saúl | 480 | 11 |
-
-## Pruebas: `pruebas/`
-
-Qué comprueba cada archivo está en [`pruebas/README.md`](pruebas/README.md). Al cerrar la etapa 5 se quitaron las pruebas de piezas sueltas y las herramientas de una sola vez; quedan la migración, la completitud, la comparación con el sistema viejo, las estrategias y la orquestación.
-
-## Documentos
-
-| Archivo | Qué hace |
-|---|---|
-| `README.md` | Portada: mapa de capas, cómo correr las pruebas y cómo cargar un dominio. |
-| `decisiones-reimplementacion.md` | Cada decisión tomada, con su motivo, y lo pendiente a implementar. |
-| `plan-etapa-2.md` | Cómo se construyó el análisis, fase por fase, con lo esperado de cada dominio y las tablas de rechazos y avisos. |
-| `plan-etapa-3.md` | Cómo se construyó la emisión, fase por fase, y el destino de cada función del verbalizador. |
-| `plan-etapa-4.md` | Cómo se construyeron las estrategias, con las mediciones. |
-| `plan-etapa-5.md` | Cómo se construyó la orquestación y la limpieza de `pruebas/`. |
-| `../plan-reimplementacion.md` | El plan general de las cinco capas. |
-| `../deficiencias-por-capa.md` | El inventario de lo que se quiere corregir. |
-| `../BASE-CONOCIMIENTO-tesis.md` | La base de conocimiento de la tesis. |
