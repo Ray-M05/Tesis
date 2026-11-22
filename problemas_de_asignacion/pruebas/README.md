@@ -3,6 +3,7 @@
 ```bash
 sbcl --script pruebas/correr.lisp               # todas, unos 30 s; código 1 si alguna falla
 python pruebas/estrategias/rendimiento.py       # aparte, unos 40 min; usa lo que hay en salida/
+python pruebas/estrategias/comparar_goloso.py   # aparte; resume las corridas de salida/ del goloso
 ```
 
 ## Qué comprueba cada archivo
@@ -20,7 +21,9 @@ python pruebas/estrategias/rendimiento.py       # aparte, unos 40 min; usa lo qu
 | `estrategias/comunes.lisp` | Lo común a las dos estrategias: semilla obligatoria, arranques, costo, caché de evaluaciones. |
 | `estrategias/genetico.lisp` | El genético: reproducible, cada motivo de parada, sus operadores y los dominios reales. |
 | `estrategias/busqueda-local.lisp` | La búsqueda local: reproducible, su paso, su parada y los dominios reales. |
+| `estrategias/goloso.lisp` | El goloso: reproducible, su JSON, que el daño de cada restricción es exacto en los cinco dominios, los dominios reales y que no toca a las otras estrategias. |
 | `estrategias/rendimiento.py` | Los criterios de la etapa 4 y lo que tardan las corridas, con proyecciones. No está en `correr.lisp`. |
+| `estrategias/comparar_goloso.py` | El goloso frente al voraz actual y la búsqueda local. Lee las corridas que dejan `ejecuciones/goloso-<dominio>.lisp` y la búsqueda local con 3 semillas. No está en `correr.lisp`. |
 | `orquestacion/utiles.lisp` | Ayudantes: escribir archivos, listar lo generado, conducir sin imprimir. |
 | `orquestacion/pedido.lisp` | La línea de comandos, los archivos de `ejecuciones/` y sus errores, y que los de `ejecuciones/` son válidos. |
 | `orquestacion/conducir.lisp` | Que se genera solo lo pedido, los avisos, que `corridas/` sobrevive, que dos dominios no se mezclan, que un dominio roto no para a los demás y que se ejecuta con sus semillas y parámetros. |

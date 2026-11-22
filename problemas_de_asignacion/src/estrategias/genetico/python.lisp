@@ -1,6 +1,6 @@
 (in-package :estrategias)
 
-(defclass genetico (estrategia)
+(defclass genetico (estrategia-de-busqueda)
   ((nombre      :initform "genetico")
    (descripcion :initform "Algoritmo genético sobre modelo.py.")
    (parada      :initform (make-instance 'parada-por-limite))

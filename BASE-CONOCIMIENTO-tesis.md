@@ -1458,7 +1458,7 @@ Al implementar se decidió además:
 - **Solo cuenta como evaluación un horario completo.** Las comprobaciones del voraz no.
 - **La búsqueda local prueba solo las opciones permitidas de la fila,** incluye la actual entre los candidatos y devuelve el mejor visto.
 
-### De la etapa 5 (falta D5.5)
+### De la etapa 5
 
 | ID | Decisión |
 |---|---|
@@ -1476,6 +1476,10 @@ Al implementar se decidió además:
 | D5.15 | Al regenerar se sobrescribe lo generado sin borrar la carpeta. |
 | D5.16 | Si un dominio falla, se informa y se sigue. |
 | D5.17 | Los cuatro puntos del verbalizador se revisan al terminar la etapa 5. |
+| D5.5 | No hay fases genéricas: cada destino ya escribe sus partes en su `emitir`. |
+| D5.18 | Los parámetros de una estrategia se aplican al ejecutar, no al generar. |
+| D5.19 | Sin semillas, se usa la 0. |
+| D5.20 | Al final de la etapa se quitan las pruebas de piezas sueltas y las herramientas de una sola vez; `rendimiento.py` se queda. |
 
 ### Trabajo extra
 
@@ -1497,7 +1501,7 @@ Al final del plan, después de la etapa 5, en `plan-reimplementacion.md`:
 | 2 | análisis | **completada** el 2026-11-06 |
 | 3 | emisión | **completada** el 2026-11-06 |
 | 4 | estrategias | **completada** el 2026-11-07; el 2026-11-08 se quitó el estancamiento del genético |
-| 5 | orquestación | pendiente |
+| 5 | orquestación | **completada** el 2026-11-09 |
 
 **Qué dejó la etapa 0**, en `problemas_de_asignacion/pruebas/`:
 
@@ -1552,6 +1556,24 @@ El modelo **todavía no se ha evaluado**: la comparación de valores y de prosa 
 - **Revisado el 2026-11-08:** el estancamiento de 100 generaciones cortaba mejoras reales en Saúl, de 17 a 14 duras, y se quitó del genético. Las mejoras de la búsqueda que quedaron fuera forman la etapa 6 extra.
 - **Sin commits.**
 
+**Qué dejó la etapa 5**, en `problemas_de_asignacion/`:
+
+- **Una sola entrada, `generar.lisp`:**
+  - genera lo que se nombra: dominios, `--destinos`, `--estrategias`;
+  - si se pide con `--ejecutar`, ejecuta cada estrategia con cada semilla, una tras otra, con la 0 si no hay ninguna;
+  - o lee un pedido guardado con `--archivo ejecuciones/<x>.lisp`, una lista leída sin evaluar, con un dominio y los parámetros de cada estrategia.
+
+  Lo que no se nombra va entero.
+- **La salida por destino:** `salida/<d>/python/` con `modelo.py`, los programas y `corridas/`; `matematica/modelo.tex`; `verbalizador/descripcion.md`; y `avisos.txt`, con los avisos del análisis, que también se imprimen.
+- **La orquestación** en `src/orquestacion/`:
+  - `elegir.lisp` saca las opciones de las clases que existen;
+  - `pedido.lisp` lee la línea de comandos o el archivo;
+  - `conducir.lisp` revisa el pedido entero antes de generar y recorre los dominios: si uno falla, se informa y se sigue.
+- **Cada destino dice qué archivo escribe** con `archivo-de`.
+- **Lo generado es idéntico byte a byte** a lo de antes. Las 102 corridas guardadas se movieron a `python/corridas/`.
+- **`pruebas/` limpia:** pasa de 66 archivos a 31, descritos en `pruebas/README.md`: la migración, la completitud, la comparación con el sistema viejo, las estrategias y la orquestación. Se quitaron las pruebas del lenguaje, del análisis, de LaTeX y del verbalizador, y las herramientas que capturaron la referencia. La suite tarda unos 30 s.
+- **Sin commits.**
+
 ## 37. Lo que esta línea de trabajo corrigió del análisis anterior
 
 Afirmaciones de este documento, de `base_de_conocimiento.md` o del primer informe que resultaron falsas o incompletas. **Prevalece lo que dice esta sección.**
@@ -1592,3 +1614,6 @@ Afirmaciones de este documento, de `base_de_conocimiento.md` o del primer inform
 34. **Las opciones permitidas son lo que hace barata la búsqueda local.** Docentes no tiene ninguna restricción de una fila, así que cada paso prueba todas las opciones de aula, día y turno, y la corrida tarda 137 s, frente a 6 s en el SEDER.
 35. **Una prueba de mutación encuentra pruebas que faltan.** De 67 cambios, solo sobrevivieron dos en la primera pasada, y los dos señalaban algo sin probar: que el programa arranque con las opciones permitidas y que los valores por defecto sean los del plan.
 36. **En Saúl, con el mismo tiempo, más población rinde más que más generaciones.** En 9,1 min, población 200 con 500 generaciones da 11 duras, y población 50 con 2 000 da 14. Población 100 con 2 000 y población 500 con 500 dan las dos 11. Es una semilla.
+37. **`generar.lisp` nunca había recibido sus argumentos.** Con `--script`, SBCL quita la opción y el nombre del guion de `*posix-argv*`, y el guion buscaba los dominios detrás de `--script`: `generar.lisp saul` generaba los cinco. Nadie lo notó porque generar de más no falla. Se vio al probar los errores del pedido desde la terminal.
+38. **Una prueba de «se lee sin evaluar» tiene que poder fallar.** Con `#.(setf ...)` leído en un paquete sin `:use`, `setf` no es el de Common Lisp, y evaluarlo fallaría igual que no evaluarlo. La prueba de mutación lo encontró; la prueba usa ahora `cl:setf`.
+39. **Quitar las pruebas de piezas sueltas tiene un costo.** El contenido de `modelo.tex` y de `descripcion.md` y los mensajes de rechazo del lenguaje dejan de probarse. Lo que calcula `modelo.py` sigue comparado con el sistema viejo, y la completitud sigue exigiendo un método por clase.

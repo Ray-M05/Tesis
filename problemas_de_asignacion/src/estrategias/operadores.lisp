@@ -31,6 +31,24 @@
 (defclass parada-por-estancamiento (parada)
   ((estancamiento :initarg :estancamiento :reader parada-estancamiento)))
 
+;; Un orden escribe f(azar, opciones), que da las filas en el orden en que se colocan.
+(defclass orden (operador) ())
+(defclass menos-opciones-primero (orden) ())
+
+;; Un criterio escribe f(duras, blandas), que da con qué se compara el daño de dos celdas.
+(defclass criterio (operador) ())
+(defclass menor-dano (criterio) ())
+
+;; Un desempate escribe una clase con elegir(azar, i, empatadas), que da una de las celdas
+;; empatadas, y quitar(i), que avisa de que la fila i ya está puesta.
+(defclass desempate (operador) ())
+(defclass celda-menos-demandada (desempate) ())
+
+;; Un daño escribe una clase con dano(fila), que da cuánto suben las duras y las blandas al
+;; poner la fila, y poner(fila).
+(defclass dano (operador) ())
+(defclass dano-por-tablas (dano) ())
+
 (defmethod nombre-de-inicio ((inicio inicio-voraz)) "voraz")
 (defmethod nombre-de-inicio ((inicio inicio-permitido)) "permitidos")
 (defmethod nombre-de-inicio ((inicio inicio-aleatorio)) "aleatorio")
@@ -162,3 +180,81 @@
 
 (defmethod emitir-operador ((operador parada-por-estancamiento) (destino python) stream)
   (emitir-parada operador destino stream t))
+
+(defmethod emitir-operador ((operador menos-opciones-primero) (destino python) stream)
+  (emitir-lineas destino stream
+                 `(,(format nil "def ~a(azar, opciones):" (funcion-de operador))
+                   ("return sorted(range(FILAS), key=lambda i: (len(opciones[i]), azar.random()))"))))
+
+(defmethod emitir-operador ((operador menor-dano) (destino python) stream)
+  (emitir-lineas destino stream
+                 `(,(format nil "def ~a(duras, blandas):" (funcion-de operador))
+                   ("return (duras, blandas)"))))
+
+;; La demanda de una ocupación es cuántas filas pendientes podrían tomarla. Cuentan las
+;; ocupaciones de las duras, y una fila cuenta una vez por ocupación.
+(defmethod emitir-operador ((operador celda-menos-demandada) (destino python) stream)
+  (emitir-lineas
+   destino stream
+   `(,(format nil "class ~a:" (clase-de operador))
+     ("def __init__(self, opciones):"
+      ("duras = [(nombre, modelo.OCUPACIONES[nombre]) for nombre, peso, _ in modelo.RESTRICCIONES"
+       ("if peso is None and nombre in modelo.OCUPACIONES]")
+       "self.claves = [{opcion: {(nombre, clave) for nombre, ocupaciones in duras"
+       ("for clave in ocupaciones(modelo.crear_fila(i, opcion))}"
+        "for opcion in opciones[i]} for i in range(FILAS)]")
+       "self.propias = [set().union(*claves.values()) for claves in self.claves]"
+       "self.demanda = {}"
+       "for propias in self.propias:"
+       ("for clave in propias:"
+        ("self.demanda[clave] = self.demanda.get(clave, 0) + 1")))
+      ""
+      "def elegir(self, azar, i, empatadas):"
+      ("demandas = {opcion: sum(self.demanda[clave] - 1 for clave in self.claves[i][opcion])"
+       ("for opcion in empatadas}")
+       "menor = min(demandas.values())"
+       "return azar.choice([opcion for opcion in empatadas if demandas[opcion] == menor])")
+      ""
+      "def quitar(self, i):"
+      ("for clave in self.propias[i]:"
+       ("self.demanda[clave] -= 1"))))))
+
+;; Una restricción con ocupaciones se evalúa sobre la fila y las vecinas, las filas puestas que
+;; comparten alguna ocupación con ella. Sin ocupaciones, sobre todas las filas puestas.
+(defmethod emitir-operador ((operador dano-por-tablas) (destino python) stream)
+  (emitir-lineas
+   destino stream
+   `(,(format nil "class ~a:" (clase-de operador))
+     ("def __init__(self):"
+      ("self.vivas = [(nombre, peso, funcion, modelo.OCUPACIONES.get(nombre))"
+       ("for nombre, peso, funcion in modelo.RESTRICCIONES if nombre not in modelo.CONSTANTES]")
+       "self.puestas = []"
+       "self.tablas = {nombre: {} for nombre, _, _, ocupaciones in self.vivas if ocupaciones}"
+       "self.valores = {nombre: funcion([]) for nombre, _, funcion, ocupaciones in self.vivas if not ocupaciones}")
+      ""
+      "def cambio(self, viva, fila):"
+      ("nombre, _, funcion, ocupaciones = viva"
+       "if not ocupaciones:"
+       ("return funcion(self.puestas + [fila]) - self.valores[nombre]")
+       "tabla = self.tablas[nombre]"
+       "vecinas = list(dict.fromkeys(otra for clave in ocupaciones(fila) for otra in tabla.get(clave, ())))"
+       "return funcion(vecinas + [fila]) - funcion(vecinas)")
+      ""
+      "def dano(self, fila):"
+      ("duras = blandas = 0"
+       "for viva in self.vivas:"
+       ("cambio = self.cambio(viva, fila)"
+        "if viva[1] is None:"
+        ("duras += cambio")
+        "else:"
+        ("blandas += viva[1] * cambio"))
+       "return duras, blandas")
+      ""
+      "def poner(self, fila):"
+      ("self.puestas.append(fila)"
+       "for nombre, _, funcion, ocupaciones in self.vivas:"
+       ("if ocupaciones:"
+        ("for clave in ocupaciones(fila):"
+         ("self.tablas[nombre].setdefault(clave, []).append(fila)"))
+        "else:"
+        ("self.valores[nombre] = funcion(self.puestas)")))))))

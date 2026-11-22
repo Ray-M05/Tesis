@@ -18,12 +18,13 @@
                  '("tv/avisos.txt" "tv/matematica/modelo.tex" "tv/python/genetico.py"
                    "tv/python/modelo.py"))))
 
-;; Sin nombrar nada: los tres destinos y los dos programas. Al regenerar, corridas/ se conserva.
+;; Sin nombrar nada: los tres destinos y los tres programas. Al regenerar, corridas/ se conserva.
 (con-carpeta (salida)
   (assert (conducir-en salida '(:dominios ("tv"))))
   (assert (equal (archivos-de salida)
                  '("tv/avisos.txt" "tv/matematica/modelo.tex" "tv/python/busqueda_local.py"
-                   "tv/python/genetico.py" "tv/python/modelo.py" "tv/verbalizador/descripcion.md")))
+                   "tv/python/genetico.py" "tv/python/goloso.py" "tv/python/modelo.py"
+                   "tv/verbalizador/descripcion.md")))
   (let ((guardada (merge-pathnames "tv/python/corridas/guardada.json" salida)))
     (escribir-texto guardada "{}")
     (assert (conducir-en salida '(:dominios ("tv"))))

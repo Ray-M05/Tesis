@@ -13,7 +13,9 @@
     (let ((estrategia (allocate-instance clase)))
       (comprobar-primario #'emitir-estrategia (list estrategia destino nil) clase)
       (comprobar-primario #'estrategias::emitir-busqueda (list estrategia destino nil) clase)
-      (comprobar-primario #'estrategias::maximo-de (list estrategia) clase))))
+      (comprobar-primario #'estrategias::emitir-principal (list estrategia destino nil) clase)))
+  (dolist (clase (hojas-de 'estrategias::estrategia-de-busqueda))
+    (comprobar-primario #'estrategias::maximo-de (list (allocate-instance clase)) clase)))
 
 (dolist (clase (hojas-de 'estrategias::inicio))
   (comprobar-primario #'estrategias::nombre-de-inicio (list (allocate-instance clase)) clase))
@@ -22,16 +24,18 @@
 (dolist (mutacion (rest (estrategias::genetico-mutaciones (make-instance 'genetico))))
   (comprobar-primario #'estrategias::argumento-de-eleccion (list mutacion) (class-of mutacion)))
 
-(assert (= (length (hojas-de 'operador)) 10))
+(assert (= (length (hojas-de 'operador)) 14))
 (comprobar-sin-defecto #'emitir-operador '(0 1))
 (comprobar-sin-defecto #'emitir-estrategia '(0 1))
 (comprobar-sin-defecto #'estrategias::emitir-busqueda '(0 1))
+(comprobar-sin-defecto #'estrategias::emitir-principal '(0 1))
 (comprobar-sin-defecto #'argumentos-de '(0))
 
 ;; ejecuciones/README.md explica todos los argumentos.
 (let ((texto (uiop:read-file-string (merge-pathnames "../../ejecuciones/README.md" pruebas-emision::*aqui*)
                                     :external-format :utf-8)))
-  (dolist (estrategia (list (make-instance 'genetico) (make-instance 'busqueda-local)))
+  (dolist (estrategia (list (make-instance 'genetico) (make-instance 'busqueda-local)
+                            (make-instance 'goloso)))
     (dolist (argumento (argumentos-de estrategia))
       (assert (search (format nil "| `--~a` |" (first argumento)) texto) ()
               "ejecuciones/README.md no explica --~a" (first argumento)))))

@@ -11,7 +11,7 @@
 (dolist (archivo '("dsl/utiles" "dsl/migracion"
                    "emision/utiles" "emision/completitud" "emision/referencia"
                    "estrategias/utiles" "estrategias/completitud" "estrategias/comunes"
-                   "estrategias/genetico" "estrategias/busqueda-local"
+                   "estrategias/genetico" "estrategias/busqueda-local" "estrategias/goloso"
                    "orquestacion/utiles" "orquestacion/pedido" "orquestacion/conducir"))
   (load (merge-pathnames (concatenate 'string archivo ".lisp") *pruebas*)
         :external-format :utf-8)

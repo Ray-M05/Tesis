@@ -47,6 +47,11 @@
   (format nil "~a~{.~a~}" (nombre-python variable)
           (mapcar #'nombre-python (reverse ruta))))
 
+(defun rutas-de-ocupacion (consulta variable)
+  "Escribe desde VARIABLE las rutas en que tienen que coincidir dos filas de una pareja: la celda y la clave."
+  (mapcar (lambda (ruta) (ruta-python variable ruta))
+          (append (pareja-celda consulta) (pareja-clave consulta))))
+
 (defun condiciones-de-fila (consulta a b destino)
   "Escribe sin repetir, sobre A, los átomos que hablan de una sola fila de la pareja."
   (let ((*renombres* (list (cons b a))))
@@ -59,8 +64,7 @@
 
 (defun emitir-celdas (consulta a dominio condiciones destino stream)
   "Reparte las filas por celda, guardando de cada una lo que tiene que ser distinto."
-  (let ((celda (mapcar (lambda (ruta) (ruta-python a ruta))
-                       (append (pareja-celda consulta) (pareja-clave consulta))))
+  (let ((celda (rutas-de-ocupacion consulta a))
         (distinto (first (pareja-distintos consulta))))
     (flet ((guardar ()
              (linea destino stream "grupos.setdefault((~{~a~^, ~},), []).append(~a)"

@@ -20,7 +20,7 @@
 
 (multiple-value-bind (destinos estrategias) (orquestacion::resolver '())
   (assert (equal (nombres-de destinos) '("matematica" "python" "verbalizador")))
-  (assert (equal (nombres-de estrategias) '("busqueda-local" "genetico"))))
+  (assert (equal (nombres-de estrategias) '("busqueda-local" "genetico" "goloso"))))
 ;; Sin python no van estrategias, salvo que se nombren.
 (assert (null (nth-value 1 (orquestacion::resolver '(:destinos ("matematica"))))))
 (assert (equal (nombres-de (nth-value 1 (orquestacion::resolver '(:destinos ("matematica")
@@ -32,7 +32,7 @@
 (rechaza (lambda () (orquestacion::resolver '(:destinos ("nada"))))
          "no existe el destino nada. Hay: matematica, python, verbalizador")
 (rechaza (lambda () (orquestacion::resolver '(:estrategias (("tabu")))))
-         "no existe la estrategia tabu. Hay: busqueda-local, genetico")
+         "no existe la estrategia tabu. Hay: busqueda-local, genetico, goloso")
 (rechaza (lambda () (orquestacion::resolver '(:estrategias (("genetico" :poblacion 200)))))
          "genetico: los parámetros solo se usan al ejecutar")
 (rechaza (lambda () (orquestacion::resolver '(:estrategias (("genetico" :ruido 1)) :ejecutar t)))

@@ -78,6 +78,7 @@
 (comprobar-sin-defecto #'emitir-restriccion '(0 1))
 (comprobar-sin-defecto #'emitir '(0))
 (comprobar-sin-defecto #'archivo-de '(0))
+(comprobar-sin-defecto #'emision::emitir-ocupaciones '(0 1 2))
 
 ;; Un nodo sin traducir es un error, no un texto.
 (assert (null (compute-applicable-methods

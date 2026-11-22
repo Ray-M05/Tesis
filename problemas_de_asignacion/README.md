@@ -3,7 +3,6 @@
 Reimplementación por capas del DSL de problemas de asignación con restricciones y de su generador de código. Sustituye a `restrictions_language-main/` y a `verbalizador/`, que siguen en local como referencia de solo lectura y no se modifican.
 
 - **Qué se corrige:** [`deficiencias-por-capa.md`](../deficiencias-por-capa.md)
-- **Cómo y en qué orden:** [`plan-reimplementacion.md`](../plan-reimplementacion.md)
 
 ## Capas
 
@@ -12,7 +11,7 @@ Reimplementación por capas del DSL de problemas de asignación con restriccione
 | 1. DSL | `src/dsl/` | el lenguaje que escribe el usuario | **completada** |
 | 2. Análisis | `src/analisis/` | el modelo intermedio que leen todos los backends | **completada** |
 | 3. Emisión | `src/emision/` | un destino por lenguaje: Python, LaTeX y prosa en español | **completada** |
-| 4. Estrategias | `src/estrategias/` | cómo se busca la solución: genético y búsqueda local | **completada** |
+| 4. Estrategias | `src/estrategias/` | cómo se busca la solución: genético, búsqueda local y goloso | **completada** |
 | 5. Orquestación | `src/orquestacion/` | qué se genera, en qué orden y dónde, y su ejecución | **completada** |
 
 Las carpetas se crean en la etapa que las llena.
@@ -33,12 +32,12 @@ Cada destino queda en su carpeta, y los avisos del análisis se imprimen y se gu
 ```
 salida/<dominio>/
 ├── avisos.txt
-├── python/          modelo.py, genetico.py, busqueda_local.py y corridas/
+├── python/          modelo.py, genetico.py, busqueda_local.py, goloso.py y corridas/
 ├── matematica/      modelo.tex
 └── verbalizador/    descripcion.md
 ```
 
-Las opciones, el formato de un archivo de `ejecuciones/` y los argumentos de cada estrategia están en [`ejecuciones/README.md`](ejecuciones/README.md). La implementación está en [`plan-etapa-5.md`](plan-etapa-5.md).
+Las opciones, el formato de un archivo de `ejecuciones/` y los argumentos de cada estrategia están en [`ejecuciones/README.md`](ejecuciones/README.md).
 
 ## Etapa 4: las estrategias
 
@@ -48,8 +47,9 @@ Las opciones, el formato de un archivo de `ejecuciones/` y los argumentos de cad
 |---|---|---|
 | `genetico.py` | Algoritmo genético | `src/estrategias/genetico/` |
 | `busqueda_local.py` | Búsqueda local | `src/estrategias/busqueda-local/` |
+| `goloso.py` | Estrategia golosa de una pasada | `src/estrategias/goloso/` |
 
-Se ejecutan con `--ejecutar` (etapa 5) o a mano desde su carpeta, con una semilla obligatoria:
+Se ejecutan con `--ejecutar` o a mano desde su carpeta, con una semilla obligatoria:
 
 ```bash
 cd salida/seder/python
@@ -64,7 +64,6 @@ Los criterios de la etapa y el costo en minutos de corridas más grandes se mide
 python pruebas/estrategias/rendimiento.py
 ```
 
-La implementación está en [`plan-etapa-4.md`](plan-etapa-4.md).
 
 ## Etapa 3: la emisión
 
@@ -81,7 +80,7 @@ Los dominios son `tv`, `tesis`, `docentes`, `seder` y `saul`. La salida queda en
 | `modelo.py` | Datos, consultas, restricciones y `evaluar`, sin búsqueda | `src/emision/python/` |
 | `modelo.tex` | El modelo matemático, para `\input` en un documento con `amsmath` | `src/emision/matematica/` |
 | `descripcion.md` | La descripción en español, del verbalizador | `src/emision/verbalizador/` |
-| `genetico.py` y `busqueda_local.py` | Las estrategias, descritas en la etapa 4 | `src/estrategias/` |
+| `genetico.py`, `busqueda_local.py` y `goloso.py` | Las estrategias | `src/estrategias/` |
 
 Para revisar la prosa, abre `salida/<dominio>/verbalizador/descripcion.md`.
 
@@ -96,7 +95,6 @@ Desde Lisp, lo mismo para un dominio:
 
 Las pruebas ejecutan el Python generado, así que hace falta `python` en el `PATH`.
 
-La implementación está en [`plan-etapa-3.md`](plan-etapa-3.md).
 
 ## Etapa 2: el análisis
 
@@ -108,7 +106,6 @@ La implementación está en [`plan-etapa-3.md`](plan-etapa-3.md).
 
 Lo que no tiene sentido, como comparar un día con un número, se rechaza con `error-dsl`. Lo dudoso queda en `modelo-avisos`, que `generar.lisp` imprime y guarda en `salida/<dominio>/avisos.txt`.
 
-La implementación está en [`plan-etapa-2.md`](plan-etapa-2.md).
 
 ## Etapa 1: el DSL
 
@@ -141,8 +138,6 @@ Las decisiones están en [`decisiones-reimplementacion.md`](decisiones-reimpleme
 | `valores.json` | diez horarios con semilla fija, como índices, y el valor de cada restricción |
 
 `pruebas/factibles/<dominio>.json` guarda un horario sin incumplimientos duros de tesis, tv y SEDER.
-
-Lo que la reimplementación cambia a propósito está en [`pruebas/referencia/diferencias-esperadas.md`](pruebas/referencia/diferencias-esperadas.md). Cualquier otra diferencia es un error.
 
 Las herramientas que capturaron estos datos, y los `horario.py`, `modelo.txt` y `descripcion.md` del sistema viejo, se quitaron al cerrar la etapa 5. El sistema viejo sigue en `restrictions_language-main/` si hubiera que rehacerlos.
 

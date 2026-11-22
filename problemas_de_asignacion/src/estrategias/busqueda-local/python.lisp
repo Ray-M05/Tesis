@@ -25,7 +25,7 @@
       "menor = min(evaluador.costo(vecino) for vecino in vecinos)"
       "return azar.choice([vecino for vecino in vecinos if evaluador.costo(vecino) == menor])"))))
 
-(defclass busqueda-local (estrategia)
+(defclass busqueda-local (estrategia-de-busqueda)
   ((nombre      :initform "busqueda_local")
    (descripcion :initform "Búsqueda local sobre modelo.py.")
    (parada      :initform (make-instance 'parada-por-estancamiento :estancamiento 2000))

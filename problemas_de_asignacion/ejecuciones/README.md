@@ -3,7 +3,7 @@
 Todo pasa por `generar.lisp`, desde la carpeta `problemas_de_asignacion/`. Lo que no se nombra va entero.
 
 ```bash
-sbcl --script generar.lisp                         # los cinco dominios, los tres destinos y las dos estrategias
+sbcl --script generar.lisp                         # los cinco dominios, los tres destinos y las tres estrategias
 sbcl --script generar.lisp saul tv                 # solo esos dominios
 sbcl --script generar.lisp saul --destinos matematica verbalizador
 sbcl --script generar.lisp seder --estrategias genetico --ejecutar --semillas 0 1 2
@@ -14,7 +14,7 @@ sbcl --script generar.lisp --archivo ejecuciones/seder.lisp
 |---|---|
 | dominios, antes de la primera opción | Las carpetas de `dominios/` que se generan. |
 | `--destinos` | `python`, `matematica`, `verbalizador`. |
-| `--estrategias` | `genetico`, `busqueda-local`. Sin nombrarlas van todas, pero solo si se genera `python`. Nombrar una trae `python` aunque no se pida, porque su programa importa `modelo.py`. |
+| `--estrategias` | `genetico`, `busqueda-local`, `goloso`. Sin nombrarlas van todas, pero solo si se genera `python`. Nombrar una trae `python` aunque no se pida, porque su programa importa `modelo.py`. |
 | `--ejecutar` | Además de generar, ejecuta cada estrategia con cada semilla, una tras otra. Sin esta opción solo se genera. |
 | `--semillas` | Las semillas de las corridas. Si no se nombra ninguna, se usa la 0. |
 | `--archivo` | Lee el pedido de un archivo. Va sola: no se mezcla con las demás opciones. |
@@ -45,6 +45,7 @@ salida/<dominio>/
 │   ├── modelo.py
 │   ├── genetico.py
 │   ├── busqueda_local.py
+│   ├── goloso.py
 │   └── corridas/              un JSON por corrida
 ├── matematica/modelo.tex
 └── verbalizador/descripcion.md
@@ -65,9 +66,9 @@ Cada corrida imprime una línea de resumen y la ruta del JSON que guarda en `cor
 
 ## De dónde salen los valores por defecto
 
-De los slots de las clases Lisp: `genetico`, `busqueda-local` y sus operadores, en `src/estrategias/`. Para cambiar un valor en una corrida se pasa el argumento; para cambiarlo en todas, se cambia el slot y se vuelve a generar. La misma semilla con los mismos argumentos da siempre el mismo resultado.
+De los slots de las clases Lisp: `genetico`, `busqueda-local`, `goloso` y sus operadores, en `src/estrategias/`. Para cambiar un valor en una corrida se pasa el argumento; para cambiarlo en todas, se cambia el slot y se vuelve a generar. La misma semilla con los mismos argumentos da siempre el mismo resultado.
 
-## Argumentos de las dos estrategias
+## Argumentos del genético y la búsqueda local
 
 | Argumento | Por defecto | Qué es y para qué sirve |
 |---|---|---|
@@ -101,6 +102,12 @@ El mejor individuo pasa siempre a la generación siguiente.
 | `--ruido` | 0 | Probabilidad de que un paso dé a la fila una opción permitida al azar en vez de la mejor. Sirve para salir de un mínimo local, pero en Saúl empeoró el resultado. |
 
 La búsqueda local recuerda el mejor horario visto y es el que devuelve.
+
+## El goloso
+
+Construye un solo horario en una pasada. Solo tiene `--semilla`, que decide los desempates al azar. No tiene penalización: compara primero las duras y después las blandas.
+
+Su JSON no tiene `costo`, `motivo_de_parada` ni `individuos`. `iteraciones` es el número de filas, `evaluaciones` vale 1, y `filas_forzadas` da las filas que no tuvieron ninguna celda sin duras.
 
 ## Lo que guarda una corrida
 

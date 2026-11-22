@@ -30,8 +30,8 @@ problemas_de_asignacion/
 │   ├── referencia/                  dominios y valores del sistema viejo
 │   └── factibles/                   horarios sin incumplimientos duros
 └── salida/<dominio>/                avisos.txt; python/ con modelo.py, genetico.py,
-                                     busqueda_local.py y corridas/; matematica/modelo.tex;
-                                     verbalizador/descripcion.md
+                                     busqueda_local.py, goloso.py y corridas/;
+                                     matematica/modelo.tex; verbalizador/descripcion.md
 ```
 
 
@@ -89,6 +89,7 @@ Traduce el modelo a cada lenguaje. Un destino es una clase, y nadie lee los regi
 | `datos.lisp` | Las clases con `eq=False` y `__str__`, una constante por instancia, las listas en orden declarado, `IDENTIDADES`, `DOMINIOS_DE_DECISION`, `crear_fila` y `crear_horario`. |
 | `consultas.lisp` | El cuerpo con bucles de toda consulta y, en un choque, el recuento por celda cuando es exacto. |
 | `restricciones.lisp` | Una emisión por forma, `RESTRICCIONES` y `evaluar`, que devuelve valores sin ponderar. También las listas de nombres que leen las estrategias: `PROHIBICIONES`, las duras con forma de prohibición; `DE_UNA_FILA`, las que se comprueban con una sola fila; y `CONSTANTES`, las que no dependen de ninguna decisión. |
+| `ocupaciones.lisp` | Las ocupaciones de una fila en cada restricción, con un método por forma y familia, y `OCUPACIONES`, que las da por nombre. Dos filas solo cambian juntas el valor de una restricción si comparten alguna ocupación. Una restricción sin ocupaciones, como un minimax, no está en `OCUPACIONES`. |
 | `resultado.lisp` | `_parejas`, `mostrar_resultado`, `a_json` y el archivo completo. |
 
 ### `matematica/`: genera `modelo.tex`
@@ -113,10 +114,11 @@ Cada estrategia escribe un programa de Python que importa `modelo.py` y no sabe 
 
 | Archivo | Qué hace |
 |---|---|
-| `estrategia.lisp` | La clase `estrategia`, con la penalización, los tres inicios y la parada; las funciones genéricas; y lo que toda estrategia escribe igual: el individuo, el evaluador, las opciones permitidas, los argumentos y el JSON de la corrida. |
-| `operadores.lisp` | Las clases de operador y su Python: `inicio-voraz`, `inicio-permitido`, `inicio-aleatorio`, `torneo`, `cruce-un-punto`, `mover-filas`, `intercambio`, `parada-por-limite` y `parada-por-estancamiento`. Cada uno declara sus argumentos. |
+| `estrategia.lisp` | La clase `estrategia` y sus dos ramas: `estrategia-de-busqueda`, con la penalización, los tres inicios y la parada, y `estrategia-constructiva`, con los operadores de construcción. También las funciones genéricas y lo que se escribe igual: las opciones permitidas, los argumentos y el JSON de la corrida, y para las de búsqueda el individuo y el evaluador. |
+| `operadores.lisp` | Las clases de operador y su Python: `inicio-voraz`, `inicio-permitido`, `inicio-aleatorio`, `torneo`, `cruce-un-punto`, `mover-filas`, `intercambio`, `parada-por-limite` y `parada-por-estancamiento`, y los de construcción: `menos-opciones-primero`, `menor-dano`, `celda-menos-demandada` y `dano-por-tablas`. Cada uno declara sus argumentos. |
 | `genetico/python.lisp` | La clase `genetico`, con sus parámetros y operadores, la elección de mutación y el bucle con elitismo. |
 | `busqueda-local/python.lisp` | La clase `busqueda-local`, su operador `mejor-opcion-de-fila` y su bucle. |
+| `goloso/python.lisp` | La clase `goloso` y su pasada: cada fila a la celda de menor daño, con el desempate entre las empatadas. |
 
 ## Orquestación: `src/orquestacion/`
 

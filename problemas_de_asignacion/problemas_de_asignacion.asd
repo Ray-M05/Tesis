@@ -38,6 +38,7 @@
                                  (:file "datos")
                                  (:file "consultas")
                                  (:file "restricciones")
+                                 (:file "ocupaciones")
                                  (:file "resultado")))
                    (:module "matematica"
                     :serial t
@@ -56,6 +57,8 @@
                    (:module "genetico"
                     :components ((:file "python")))
                    (:module "busqueda-local"
+                    :components ((:file "python")))
+                   (:module "goloso"
                     :components ((:file "python")))))
      (:module "orquestacion"
       :serial t
