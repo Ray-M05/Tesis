@@ -26,22 +26,20 @@
   (declare (ignore stream))
   nil)
 
-;; Las mismas por las que se agrupan las filas al contar el choque: la celda y la clave, por
-;; cada valor de los demás iteradores con el que la fila cumple las condiciones de una fila.
-(defmethod emitir-ocupaciones ((restriccion prohibicion) (consulta choque-por-parejas) (destino python) stream)
+(defun emitir-recorrido-de-choque (nombre lista consulta destino stream elemento)
+  "Define NOMBRE(fila), que junta en LISTA lo que escribe ELEMENTO por cada valor de los iteradores exteriores con el que la fila cumple las condiciones de una fila, y devuelve NOMBRE."
   (let* ((iteradores (consulta-iteradores consulta))
          (pareja (remove-if-not #'third iteradores))
          (exteriores (remove-if #'third iteradores))
          (a (first (first pareja)))
          (condiciones (condiciones-de-fila consulta a (first (second pareja)) destino))
-         (ocupacion (append (mapcar (lambda (iterador) (nombre-python (first iterador))) exteriores)
-                            (rutas-de-ocupacion consulta a)))
-         (nombre (nombre-de-ocupaciones restriccion)))
+         (valor (funcall elemento a (mapcar (lambda (iterador) (nombre-python (first iterador)))
+                                            exteriores))))
     (flet ((guardar ()
-             (linea destino stream "ocupaciones.append((~{~a~^, ~},))" ocupacion)))
+             (linea destino stream "~a.append(~a)" lista valor)))
       (linea destino stream "def ~a(~a):" nombre (nombre-python a))
       (con-sangria (destino)
-        (linea destino stream "ocupaciones = []")
+        (linea destino stream "~a = []" lista)
         (emitir-bucles exteriores destino stream
                        (lambda ()
                          (cond (condiciones
@@ -49,9 +47,17 @@
                                 (con-sangria (destino)
                                   (guardar)))
                                (t (guardar)))))
-        (linea destino stream "return ocupaciones")))
+        (linea destino stream "return ~a" lista)))
     (terpri stream)
     nombre))
+
+;; Las mismas por las que se agrupan las filas al contar el choque: la celda y la clave, por
+;; cada valor de los demás iteradores con el que la fila cumple las condiciones de una fila.
+(defmethod emitir-ocupaciones ((restriccion prohibicion) (consulta choque-por-parejas) (destino python) stream)
+  (emitir-recorrido-de-choque (nombre-de-ocupaciones restriccion) "ocupaciones" consulta destino stream
+                              (lambda (a exteriores)
+                                (format nil "(~{~a~^, ~},)"
+                                        (append exteriores (rutas-de-ocupacion consulta a))))))
 
 ;; Dos filas solo se relacionan si coinciden en lo que la condición iguala entre ellas. Con
 ;; papeles, o sin nada que igualar, no se pueden separar.
@@ -93,16 +99,50 @@
         (terpri stream)
         nombre))))
 
-(defun emitir-tabla-de-ocupaciones (destino stream)
-  "Define las ocupaciones de cada restricción con decisiones y una sola consulta, y OCUPACIONES, que las da por nombre."
-  (let ((ocupaciones
+(defgeneric emitir-claves (restriccion consulta destino stream)
+  (:documentation "Define la función que da los pares (clave, celda) de una fila, y devuelve su nombre o nil si no los tiene. Dos filas con la misma clave y la misma celda incumplen siempre RESTRICCION."))
+
+(defun tupla-python (elementos)
+  "Escribe una tupla de Python, también si está vacía o tiene un solo elemento."
+  (format nil "(~{~a,~^ ~})" elementos))
+
+(defmethod emitir-claves ((restriccion restriccion-m) (consulta consulta-m) (destino python) stream)
+  (declare (ignore stream))
+  nil)
+
+;; Solo un choque duro en el que todo lo que tiene que ser distinto es la identidad: así dos filas
+;; con la misma clave y la misma celda chocan siempre. En docentes no, porque se pueden apilar.
+(defmethod emitir-claves ((restriccion prohibicion) (consulta choque-por-parejas) (destino python) stream)
+  (let ((identidad (list (problema-identidad (modelo-problema (destino-modelo destino))))))
+    (when (and (null (restriccion-peso restriccion))
+               (every (lambda (ruta) (equal ruta identidad)) (pareja-distintos consulta)))
+      (emitir-recorrido-de-choque
+       (format nil "claves_~a" (nombre-python (restriccion-nombre restriccion))) "claves"
+       consulta destino stream
+       (lambda (a exteriores)
+         (flet ((rutas (rutas) (mapcar (lambda (ruta) (ruta-python a ruta)) rutas)))
+           (format nil "(~a, ~a)"
+                   (tupla-python (append exteriores (rutas (pareja-clave consulta))))
+                   (tupla-python (rutas (pareja-celda consulta))))))))))
+
+(defun emitir-tabla (tabla emisor destino stream)
+  "Define lo que escribe EMISOR para cada restricción con decisiones y una sola consulta, y TABLA, que lo da por nombre."
+  (let ((funciones
           (loop for restriccion in (modelo-restricciones (destino-modelo destino))
                 for consultas = (restriccion-consultas restriccion)
                 for funcion = (and (restriccion-decisiones restriccion)
                                    consultas
                                    (null (rest consultas))
-                                   (emitir-ocupaciones restriccion (first consultas) destino stream))
+                                   (funcall emisor restriccion (first consultas) destino stream))
                 when funcion
                   collect (format nil "~s: ~a" (nombre-python (restriccion-nombre restriccion)) funcion))))
-    (linea destino stream "OCUPACIONES = {~{~a~^, ~}}" ocupaciones)
+    (linea destino stream "~a = {~{~a~^, ~}}" tabla funciones)
     (terpri stream)))
+
+(defun emitir-tabla-de-ocupaciones (destino stream)
+  "Define las ocupaciones de cada restricción con decisiones y una sola consulta, y OCUPACIONES, que las da por nombre."
+  (emitir-tabla "OCUPACIONES" #'emitir-ocupaciones destino stream))
+
+(defun emitir-tabla-de-claves (destino stream)
+  "Define los pares (clave, celda) de cada choque duro en el que chocan siempre, y CLAVES, que los da por nombre."
+  (emitir-tabla "CLAVES" #'emitir-claves destino stream))

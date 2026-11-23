@@ -49,6 +49,23 @@
 (defclass dano (operador) ())
 (defclass dano-por-tablas (dano) ())
 
+;; Un daño reversible escribe además quitar(fila); propio(fila), que da cuánto bajan las duras y
+;; las blandas al quitar una fila puesta; y vecinas(fila).
+(defclass dano-reversible (dano-por-tablas) ())
+
+;; Una memoria escribe una clase con prohibida(i, opcion, paso), que dice si la fila i no puede
+;; volver a opcion en ese paso, y marcar(i, opcion, paso).
+(defclass memoria (operador) ())
+(defclass tabu-corto (memoria)
+  ((duracion :initarg :duracion :initform 10 :reader tabu-corto-duracion)))
+
+;; Una permuta escribe f(azar, estado, i, companeras, tabu, paso, admitidas, criterio, args), que
+;; intercambia las celdas de la fila i con las de una compañera y da las filas a las que pudo
+;; cambiar el conflicto, o None si no intercambia.
+(defclass permuta (operador) ())
+(defclass permuta-de-clave (permuta)
+  ((probabilidad :initarg :probabilidad :initform 0.25 :reader permuta-de-clave-probabilidad)))
+
 (defmethod nombre-de-inicio ((inicio inicio-voraz)) "voraz")
 (defmethod nombre-de-inicio ((inicio inicio-permitido)) "permitidos")
 (defmethod nombre-de-inicio ((inicio inicio-aleatorio)) "aleatorio")
@@ -68,6 +85,14 @@
 (defmethod argumentos-de ((operador intercambio))
   (list (list "intercambio" "float" (intercambio-probabilidad operador)
               "Probabilidad de que una mutación intercambie dos filas en vez de moverlas.")))
+
+(defmethod argumentos-de ((operador tabu-corto))
+  (list (list "tabu" "int" (tabu-corto-duracion operador)
+              "Pasos durante los que una fila no puede volver a la celda que acaba de dejar.")))
+
+(defmethod argumentos-de ((operador permuta-de-clave))
+  (list (list "permuta" "float" (permuta-de-clave-probabilidad operador)
+              "Probabilidad de que un paso intente intercambiar la fila con otra de su clave más justa.")))
 
 (defmethod argumentos-de ((operador parada))
   (list (list "tiempo" "float" (parada-tiempo operador)
@@ -258,3 +283,70 @@
          ("self.tablas[nombre].setdefault(clave, []).append(fila)"))
         "else:"
         ("self.valores[nombre] = funcion(self.puestas)")))))))
+
+;; Las mismas tablas que el daño del goloso, con lo que hace falta para sacar una fila puesta.
+(defmethod emitir-operador ((operador dano-reversible) (destino python) stream)
+  (call-next-method)
+  (emitir-lineas
+   destino stream
+   '((""
+      "def quitar(self, fila):"
+      ("self.puestas.remove(fila)"
+       "for nombre, _, funcion, ocupaciones in self.vivas:"
+       ("if ocupaciones:"
+        ("for clave in ocupaciones(fila):"
+         ("self.tablas[nombre][clave].remove(fila)"))
+        "else:"
+        ("self.valores[nombre] = funcion(self.puestas)")))
+      ""
+      "def propio(self, fila):"
+      ("self.quitar(fila)"
+       "valor = self.dano(fila)"
+       "self.poner(fila)"
+       "return valor")
+      ""
+      "def vecinas(self, fila):"
+      ("return {otra for nombre, _, _, ocupaciones in self.vivas if ocupaciones"
+       ("for clave in ocupaciones(fila) for otra in self.tablas[nombre].get(clave, ()) if otra is not fila}"))))))
+
+(defmethod emitir-operador ((operador tabu-corto) (destino python) stream)
+  (emitir-lineas
+   destino stream
+   `(,(format nil "class ~a:" (clase-de operador))
+     ("def __init__(self, args):"
+      ("self.duracion = args.tabu"
+       "self.hasta = {}")
+      ""
+      "def prohibida(self, i, opcion, paso):"
+      ("return paso <= self.hasta.get((i, opcion), -1)")
+      ""
+      "def marcar(self, i, opcion, paso):"
+      ("self.hasta[i, opcion] = paso + self.duracion")))))
+
+;; Prueba las compañeras en orden al azar y se queda con la primera que no sale de su dominio,
+;; no es tabú y no empeora. Si empeora, deshace el intercambio.
+(defmethod emitir-operador ((operador permuta-de-clave) (destino python) stream)
+  (emitir-lineas
+   destino stream
+   `(,(format nil "def ~a(azar, estado, i, companeras, tabu, paso, admitidas, criterio, args):"
+              (funcion-de operador))
+     ("if azar.random() >= args.permuta:"
+      ("return None")
+      "for j in azar.sample(companeras, len(companeras)):"
+      ("a, b = estado.posiciones[j], estado.posiciones[i]"
+       "if a == b or a not in admitidas[i] or b not in admitidas[j] or tabu.prohibida(i, a, paso) or tabu.prohibida(j, b, paso):"
+       ("continue")
+       "antes, afectadas = estado.valor, estado.afectadas(i) | estado.afectadas(j)"
+       "estado.sacar(i)"
+       "estado.sacar(j)"
+       "estado.meter(i, a)"
+       "estado.meter(j, b)"
+       "if criterio(*estado.valor) <= criterio(*antes):"
+       ("tabu.marcar(i, b, paso)"
+        "tabu.marcar(j, a, paso)"
+        "return afectadas | estado.afectadas(i) | estado.afectadas(j)")
+       "estado.sacar(i)"
+       "estado.sacar(j)"
+       "estado.meter(i, b)"
+       "estado.meter(j, a)")
+      "return None"))))

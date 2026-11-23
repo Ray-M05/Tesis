@@ -24,7 +24,7 @@
 (dolist (mutacion (rest (estrategias::genetico-mutaciones (make-instance 'genetico))))
   (comprobar-primario #'estrategias::argumento-de-eleccion (list mutacion) (class-of mutacion)))
 
-(assert (= (length (hojas-de 'operador)) 14))
+(assert (= (length (hojas-de 'operador)) 16))
 (comprobar-sin-defecto #'emitir-operador '(0 1))
 (comprobar-sin-defecto #'emitir-estrategia '(0 1))
 (comprobar-sin-defecto #'estrategias::emitir-busqueda '(0 1))
@@ -35,7 +35,7 @@
 (let ((texto (uiop:read-file-string (merge-pathnames "../../ejecuciones/README.md" pruebas-emision::*aqui*)
                                     :external-format :utf-8)))
   (dolist (estrategia (list (make-instance 'genetico) (make-instance 'busqueda-local)
-                            (make-instance 'goloso)))
+                            (make-instance 'goloso) (make-instance 'reparacion-tabu)))
     (dolist (argumento (argumentos-de estrategia))
       (assert (search (format nil "| `--~a` |" (first argumento)) texto) ()
               "ejecuciones/README.md no explica --~a" (first argumento)))))

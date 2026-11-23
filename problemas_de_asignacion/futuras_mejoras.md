@@ -1,6 +1,6 @@
 # Futuras mejoras
 
-Reúne lo que queda por hacer después de [`propuesta_greedy.md`](propuesta_greedy.md):
+Reúne lo que queda por hacer después de [`reparacion_tabu.md`](reparacion_tabu.md):
 
 - Los puntos del ranking de estrategias que la propuesta no toma y que siguen valiendo la pena.
 - Todo lo de las etapas extra de [`plan-reimplementacion.md`](plan-reimplementacion.md): la etapa 6 extra y el trabajo extra.

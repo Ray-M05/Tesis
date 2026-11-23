@@ -59,6 +59,8 @@
                    (:module "busqueda-local"
                     :components ((:file "python")))
                    (:module "goloso"
+                    :components ((:file "python")))
+                   (:module "reparacion-tabu"
                     :components ((:file "python")))))
      (:module "orquestacion"
       :serial t

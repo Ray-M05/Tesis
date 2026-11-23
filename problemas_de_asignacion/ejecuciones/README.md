@@ -3,7 +3,7 @@
 Todo pasa por `generar.lisp`, desde la carpeta `problemas_de_asignacion/`. Lo que no se nombra va entero.
 
 ```bash
-sbcl --script generar.lisp                         # los cinco dominios, los tres destinos y las tres estrategias
+sbcl --script generar.lisp                         # los cinco dominios, los tres destinos y las cuatro estrategias
 sbcl --script generar.lisp saul tv                 # solo esos dominios
 sbcl --script generar.lisp saul --destinos matematica verbalizador
 sbcl --script generar.lisp seder --estrategias genetico --ejecutar --semillas 0 1 2
@@ -14,7 +14,7 @@ sbcl --script generar.lisp --archivo ejecuciones/seder.lisp
 |---|---|
 | dominios, antes de la primera opción | Las carpetas de `dominios/` que se generan. |
 | `--destinos` | `python`, `matematica`, `verbalizador`. |
-| `--estrategias` | `genetico`, `busqueda-local`, `goloso`. Sin nombrarlas van todas, pero solo si se genera `python`. Nombrar una trae `python` aunque no se pida, porque su programa importa `modelo.py`. |
+| `--estrategias` | `genetico`, `busqueda-local`, `goloso`, `reparacion-tabu`. Sin nombrarlas van todas, pero solo si se genera `python`. Nombrar una trae `python` aunque no se pida, porque su programa importa `modelo.py`. Solo se escriben y se ejecutan las que se nombran: los programas de las demás no se tocan. |
 | `--ejecutar` | Además de generar, ejecuta cada estrategia con cada semilla, una tras otra. Sin esta opción solo se genera. |
 | `--semillas` | Las semillas de las corridas. Si no se nombra ninguna, se usa la 0. |
 | `--archivo` | Lee el pedido de un archivo. Va sola: no se mezcla con las demás opciones. |
@@ -46,6 +46,7 @@ salida/<dominio>/
 │   ├── genetico.py
 │   ├── busqueda_local.py
 │   ├── goloso.py
+│   ├── reparacion_tabu.py
 │   └── corridas/              un JSON por corrida
 ├── matematica/modelo.tex
 └── verbalizador/descripcion.md
@@ -66,7 +67,7 @@ Cada corrida imprime una línea de resumen y la ruta del JSON que guarda en `cor
 
 ## De dónde salen los valores por defecto
 
-De los slots de las clases Lisp: `genetico`, `busqueda-local`, `goloso` y sus operadores, en `src/estrategias/`. Para cambiar un valor en una corrida se pasa el argumento; para cambiarlo en todas, se cambia el slot y se vuelve a generar. La misma semilla con los mismos argumentos da siempre el mismo resultado.
+De los slots de las clases Lisp: `genetico`, `busqueda-local`, `goloso`, `reparacion-tabu` y sus operadores, en `src/estrategias/`. Para cambiar un valor en una corrida se pasa el argumento; para cambiarlo en todas, se cambia el slot y se vuelve a generar. La misma semilla con los mismos argumentos da siempre el mismo resultado.
 
 ## Argumentos del genético y la búsqueda local
 
@@ -108,6 +109,23 @@ La búsqueda local recuerda el mejor horario visto y es el que devuelve.
 Construye un solo horario en una pasada. Solo tiene `--semilla`, que decide los desempates al azar. No tiene penalización: compara primero las duras y después las blandas.
 
 Su JSON no tiene `costo`, `motivo_de_parada` ni `individuos`. `iteraciones` es el número de filas, `evaluaciones` vale 1, y `filas_forzadas` da las filas que no tuvieron ninguna celda sin duras.
+
+## La reparación tabú
+
+Cada arranque construye un horario con la pasada del goloso y lo repara: primero las duras y, si llega a 0, las blandas. En cada paso elige al azar una fila en conflicto, una que al quitarla baja alguna restricción incumplida, y la lleva a su mejor celda permitida que no sea la actual ni tabú, o la intercambia con otra fila de su clave más justa. Compara primero las duras y después las blandas, sin penalización. Para en (0, 0) o al llegar a `--arranques`. No tiene límite de tiempo, así que la misma semilla da siempre el mismo horario.
+
+| Argumento | Por defecto | Qué es y para qué sirve |
+|---|---|---|
+| `--semilla` | obligatoria | Semilla del generador de números al azar. Decide los desempates y qué fila en conflicto se mueve. |
+| `--tabu` | 10 | Pasos durante los que una fila no puede volver a la celda que acaba de dejar, salvo que eso mejore lo mejor del arranque. |
+| `--permuta` | 0,25 | Probabilidad de que un paso intente intercambiar la fila con otra de su clave más justa antes de moverla. Solo vale en los choques donde dos filas con la misma clave y la misma celda chocan siempre: no hay claves en tv ni en docentes. |
+| `--arranques` | 10 | Máximo de arranques. Hace al menos uno. En tesis, docentes y el SEDER el objetivo nunca llega a 0, así que hace todos. |
+| `--estancamiento` | 5 × filas | Pasos seguidos sin mejorar lo mejor del arranque que terminan la fase de las duras y el arranque. |
+| `--pulido` | filas | Pasos seguidos sin mejora que terminan la fase de las blandas. |
+
+Antes de buscar compara, por cada clave, las filas que la tienen con las celdas que alcanzan. Si alguna no cabe, construye un horario y termina con `infactible`.
+
+Su JSON no tiene `costo`, `individuos` ni `filas_forzadas`. `motivo_de_parada` es `optimo`, `maximo` o `infactible`. `iteraciones` son los pasos, `arranques` los que hizo, y `evaluaciones` los horarios enteros evaluados: uno por arranque y el del resultado. `certificado` da las claves con holgura 0 o negativa, y `mejoras`, el arranque, el paso, los segundos y las duras y blandas cada vez que mejora el mejor horario visto.
 
 ## Lo que guarda una corrida
 

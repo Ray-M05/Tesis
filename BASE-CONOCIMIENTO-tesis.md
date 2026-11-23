@@ -6,6 +6,8 @@
 >
 > **Novedad de noviembre de 2026: la reimplementación por capas (PARTE VII).** El proyecto se rehace en una carpeta nueva, `C:\Pro\tesis\problemas_de_asignacion\`, organizada en cinco capas y con las deficiencias del generador corregidas. La PARTE VII explica qué se busca, dónde están el inventario y el plan, qué se ha decidido y en qué estado está cada etapa. **Varias afirmaciones de este documento y de `base_de_conocimiento.md` quedaron corregidas por esa línea de trabajo; ver §37.**
 >
+> **Novedad del 22 de noviembre de 2026: la estrategia golosa (§38).** Una tercera estrategia, `goloso`, construye el horario en una sola pasada. Está implementada, probada y medida en los cinco dominios. Medirla dejó cinco correcciones nuevas en §37.
+>
 > Este documento se llamaba antes `BASE-CONOCIMIENTO-backend-ilp.md` y cubría solo el backend ILP. Se amplió para recoger toda la investigación sobre la tesis, no únicamente esa línea de trabajo. Toda investigación nueva entra aquí.
 
 > **Bases de conocimiento relacionadas.** Para todo lo referido a **Generadores Multilenguajes, la herramienta MGA, los macros `defnode` / `gcode`, la función genérica `generate-code`, la jerarquía de clases de lenguajes de salida y el linaje de trabajos de MATCOM (ADOL\*, LAML, IVNS, GEMURAL)**, consultar [`BASE-CONOCIMIENTO-mga-arcia-2017.md`](BASE-CONOCIMIENTO-mga-arcia-2017.md) — análisis de la tesis de Yasmany Arcia Corcho (UH/MATCOM, 2017), *Automatizar la creación de Generadores Multilenguajes*. Ese documento cubre además la comparación entre MGA y nuestro `clases-macros.lisp`, y qué partes de MGA aplican y cuáles **no** aplican al backend ILP (ver su §9.4).
@@ -698,6 +700,14 @@ Al eliminar el párrafo de las cinco naturalezas de los atributos, las tres últ
 47. Se escribió `plan-reimplementacion.md` y se tomaron las decisiones de la etapa 0 (§35).
 48. **Etapa 0 completada** el 2026-11-02 (§36).
 
+### Hilo 7 — la estrategia golosa
+
+49. Se analizaron las estrategias de la capa 4 y la propuesta que hoy es `reparacion_tabu.md`, y se concluyó que esta última no es un voraz sino una metaheurística de trayectoria. El usuario pidió un voraz puro, rápido, al que no le importe tanto la factibilidad.
+50. Con un prototipo genérico fuera del proyecto se midieron las cinco decisiones de un voraz en los cinco dominios (§38.2). Salieron la trampa de «mañana primero» en Saúl (§38.3) y el apilamiento de docentes (§37, punto 43).
+51. El usuario eligió la mezcla A con una sola pasada. Se escribieron `propuesta_goloso.md` y `plan_goloso.md` y se tomaron DG.1 a DG.6 (§35). Lo que primero se llamó «cubeta» pasó a llamarse **ocupación**.
+52. El 2026-11-22 se implementaron las fases 0 a 3 y se midieron las fases 4 y 5 (§38.4, §38.5). El plan quedó completo.
+53. Se estimó, sin probarlo, el efecto del goloso como arranque del genético y de la búsqueda local (§38.6).
+
 ## 23. Próximos pasos posibles (no hechos aún)
 
 > **Desde noviembre de 2026, los pasos sobre el generador están absorbidos por la reimplementación por capas** (PARTE VII): honrar `:devuelve` y el umbral del nppq, la colisión de nombres, el emisor ILP y el dominio del departamento tienen su etapa en [`plan-reimplementacion.md`](plan-reimplementacion.md). Lo que sigue se conserva como historial; el plan es la fuente vigente.
@@ -1293,6 +1303,10 @@ El proyecto se rehace en una carpeta nueva, **`C:\Pro\tesis\problemas_de_asignac
 | [`problemas_de_asignacion/decisiones-reimplementacion.md`](problemas_de_asignacion/decisiones-reimplementacion.md) | Cada decisión tomada, con su motivo, agrupadas por tema, y lo pendiente a implementar. |
 | [`problemas_de_asignacion/plan-etapa-2.md`](problemas_de_asignacion/plan-etapa-2.md) | Cómo se construyó el análisis: fases, lo esperado de cada restricción y las tablas de rechazos, avisos y consultas genéricas. |
 | [`problemas_de_asignacion/plan-etapa-3.md`](problemas_de_asignacion/plan-etapa-3.md) | Cómo se construyó la emisión: fases, valor de cada restricción y destino de cada función del verbalizador. |
+| [`problemas_de_asignacion/reparacion_tabu.md`](problemas_de_asignacion/reparacion_tabu.md) | La estrategia de reparación tabú: construcción golosa, mínimos conflictos con tabú y reinicios. Sin implementar. |
+| [`problemas_de_asignacion/futuras_mejoras.md`](problemas_de_asignacion/futuras_mejoras.md) | Lo que queda por hacer en la evaluación, la búsqueda, el backend exacto, MGA, el lenguaje y la emisión. |
+| [`problemas_de_asignacion/propuesta_goloso.md`](problemas_de_asignacion/propuesta_goloso.md) | La estrategia golosa: qué hace, en qué se diferencia del voraz que ya había, resultados y dos valoraciones. |
+| [`problemas_de_asignacion/plan_goloso.md`](problemas_de_asignacion/plan_goloso.md) | Cómo se implementó y midió el goloso: fases, decisiones, criterios y progreso. |
 
 ## 33. Las cinco capas
 
@@ -1492,6 +1506,21 @@ Al final del plan, después de la etapa 5, en `plan-reimplementacion.md`:
   - medir el efecto de D3.7.
 - **Trabajo extra:** MGA, el ILP y los pendientes anotados.
 
+### De la estrategia golosa
+
+Fuera del plan de reimplementación, en `problemas_de_asignacion/plan_goloso.md`:
+
+| ID | Decisión |
+|---|---|
+| DG.1 | Dos ramas bajo `estrategia`: `estrategia-de-busqueda`, del genético y la búsqueda local, y `estrategia-constructiva`, del goloso y de la futura reparación. Nadie hereda argumentos que no usa. |
+| DG.2 | La demanda de una celda sale de las ocupaciones de las duras. |
+| DG.3 | El JSON del goloso no lleva `costo` ni `inicio`, y añade `filas_forzadas`. |
+| DG.4 | El resumen de la medición es `pruebas/estrategias/comparar_goloso.py`, fuera de `correr.lisp`. |
+| DG.5 | Se compara con el voraz actual, con 25 semillas, y con la búsqueda local, con 3. El genético no entra. |
+| DG.6 | El daño se calcula con las ocupaciones y, sin ellas, con todas las filas puestas, como respaldo. |
+
+Además: una sola construcción, sin multiarranque; la fase 5 solo con el genético; y durante el análisis previo, nada se tocó en el proyecto.
+
 ## 36. Estado por etapa
 
 | Etapa | Capa | Estado |
@@ -1502,6 +1531,7 @@ Al final del plan, después de la etapa 5, en `plan-reimplementacion.md`:
 | 3 | emisión | **completada** el 2026-11-06 |
 | 4 | estrategias | **completada** el 2026-11-07; el 2026-11-08 se quitó el estancamiento del genético |
 | 5 | orquestación | **completada** el 2026-11-09 |
+| extra | estrategia golosa | **completada** el 2026-11-22 (§38) |
 
 **Qué dejó la etapa 0**, en `problemas_de_asignacion/pruebas/`:
 
@@ -1617,3 +1647,101 @@ Afirmaciones de este documento, de `base_de_conocimiento.md` o del primer inform
 37. **`generar.lisp` nunca había recibido sus argumentos.** Con `--script`, SBCL quita la opción y el nombre del guion de `*posix-argv*`, y el guion buscaba los dominios detrás de `--script`: `generar.lisp saul` generaba los cinco. Nadie lo notó porque generar de más no falla. Se vio al probar los errores del pedido desde la terminal.
 38. **Una prueba de «se lee sin evaluar» tiene que poder fallar.** Con `#.(setf ...)` leído en un paquete sin `:use`, `setf` no es el de Common Lisp, y evaluarlo fallaría igual que no evaluarlo. La prueba de mutación lo encontró; la prueba usa ahora `cl:setf`.
 39. **Quitar las pruebas de piezas sueltas tiene un costo.** El contenido de `modelo.tex` y de `descripcion.md` y los mensajes de rechazo del lenguaje dejan de probarse. Lo que calcula `modelo.py` sigue comparado con el sistema viejo, y la completitud sigue exigiendo un método por clase.
+40. **La búsqueda local sí llega a 0 duras en Saúl, sin cambiar nada** (corrige los puntos 26 y 29). Con sus valores por defecto y sin límite de tiempo, se detiene por estancamiento en 0, 1 y 3 duras con las semillas 0, 1 y 2, en 11 a 18 minutos. Las 6 duras de antes se debían al límite de 120 s.
+41. **Saúl tiene 3 grupos por año** (corrige §31.2): 9 grupos y 297 sesiones, no cuatro grupos por año y unas 360 filas. Los de 10mo tienen 35 sesiones para 35 celdas, sin holgura.
+42. **El arranque pesa en el genético y poco en la búsqueda local** (matiza el punto 26, que se midió en el genético).
+    - **Genético:** en 500 generaciones solo bajó su arranque voraz de 1 a 3 duras en Saúl, de 17, 11 y 15 a 14, 10 y 14. Lo que mejora sale casi entero del mejor individuo.
+    - **Búsqueda local:** a los 120 s, unos 760 pasos, estaba en 6 duras con las tres semillas, aunque arrancaba de 17, 11 y 15.
+43. **Docentes acepta apilar mucho más de lo que se sabía** (amplía el punto 20). Un voraz que coloca cada sesión en la primera celda libre pone las 70 sesiones en 5 celdas, hasta 14 en la misma aula, día y turno, sin incumplir ninguna dura. El goloso apila hasta 5, y el voraz actual hasta 3.
+44. **Ni el genético ni la búsqueda local bajan las blandas de docentes de 5,** que es lo que da su arranque voraz; el goloso deja 2. Mover una sola fila casi nunca baja el máximo de días de un profesor: hay que vaciarle un día entero, y varios pueden empatar en el máximo.
+
+## 38. La estrategia golosa
+
+> **ESTADO: implementada y medida el 2026-11-22.** La propuesta, los resultados y dos valoraciones están en [`problemas_de_asignacion/propuesta_goloso.md`](problemas_de_asignacion/propuesta_goloso.md). Las fases, las decisiones y el progreso, en [`problemas_de_asignacion/plan_goloso.md`](problemas_de_asignacion/plan_goloso.md).
+
+### 38.1 Qué es y por qué
+
+`goloso` es una tercera estrategia: construye un único horario en una sola pasada.
+
+- **Asignación directa:** cada fila se decide una vez y no se vuelve a tocar. No repara, no deshace y no reinicia.
+- **No persigue la factibilidad:** si una fila no tiene ninguna celda limpia, toma la de menor daño y queda anotada como forzada.
+
+El usuario la pidió como algo distinto de la reparación tabú, `reparacion_tabu.md`, que es una metaheurística de trayectoria: construcción, mínimos conflictos, tabú, permuta y reinicios.
+
+### 38.2 Las formas de construir un voraz
+
+Un voraz queda definido por cinco decisiones. Mezclar sus opciones sigue siendo asignación directa mientras ninguna fila puesta se mueva:
+
+| Decisión | Opciones medidas |
+|---|---|
+| Qué fila va ahora | declarado, azar, menos opciones (fijo), dinámico, arrepentimiento |
+| Qué celdas mira | permitidas, todas |
+| Cómo mide lo malo | solo duras, lexicográfico, choques primero |
+| Cómo desempata | declarado, transpuesto, azar, menos demandada |
+| Cuántas veces construye | una, o varias quedándose con la mejor |
+
+Lo que dejó medirlas con un prototipo genérico fuera del proyecto, en 1 550 corridas:
+
+- **En Saúl, lo que más pesa es el orden de filas:** de 32 duras con orden al azar a 12 con menos opciones primero.
+- **El orden dinámico y el arrepentimiento no mejoran nada,** y son unas 30 veces más lentos.
+- **El lexicográfico baja las blandas en todos los dominios sin tocar las duras.** La celda menos demandada baja unas 2 duras en Saúl. Los dos efectos se suman sin estorbarse.
+- **«Solo permitidas» y «choques primero» responden a una sola pregunta:** qué se rompe cuando no queda ninguna celda limpia. Dentro de las celdas permitidas nunca se rompe una regla de una fila, así que «choques primero» sobre ellas es lo mismo que el lexicográfico.
+- **Las duras solo distinguen en Saúl:** en tv, tesis, SEDER y docentes, cualquier voraz razonable deja 0.
+
+Se eligió la **mezcla A**, con una sola construcción: menos opciones primero, solo celdas permitidas, criterio lexicográfico y celda menos demandada.
+
+### 38.3 La trampa de «mañana primero» en Saúl
+
+Saúl tiene 7 turnos, 5 de mañana y 2 de tarde. En 10mo, 17 de las 35 sesiones de cada grupo solo pueden ir de mañana, y de las 18 flexibles, 10 tienen que ir de tarde. Llevar cada sesión a la primera celda libre de la mañana llena la mañana con las flexibles y deja 17 duras, 15 de ellas choques de grupo.
+
+Lo correcto es «la celda que menos les hace falta a las demás». Sale sola de la poda unaria y de la demanda, sin escribir «mañana» en `src/`. El profesor W tiene 12 sesiones para 12 celdas alcanzables.
+
+### 38.4 Cómo se implementó
+
+- **Dos ramas de estrategia** bajo `estrategia` (DG.1). La parada va en cada estrategia que la usa. `emitir-principal` es una función genérica, con un `:around` común. `genetico.py` y `busqueda_local.py` salieron idénticos byte a byte.
+- **Cuatro operadores de construcción:** `menos-opciones-primero`, `menor-dano`, `celda-menos-demandada` y `dano-por-tablas`. Hay 14 operadores en total.
+- **Ocupaciones,** en `src/emision/python/ocupaciones.lisp`, y la lista `OCUPACIONES` de `modelo.py`. Una ocupación es el lugar donde dos filas pueden afectarse, como (10-1, lunes, T2); dos filas solo cambian juntas el valor de una restricción si comparten alguna. Hay un método por forma y familia:
+  - un choque da su celda y su clave, por cada valor de los iteradores exteriores con el que la fila cumple las condiciones de una fila;
+  - una relación ordenada da lo que su condición iguala entre las dos filas;
+  - una restricción de una fila no da ninguna;
+  - una cota sobre una agrupación da las tuplas de parámetros en las que cuenta la fila;
+  - el resto, como los minimax, no tiene.
+- **El daño es exacto:** el valor de la restricción sobre la fila y sus vecinas, menos su valor sobre las vecinas solas. Las vecinas son las filas puestas que comparten alguna ocupación con la fila.
+  - **El respaldo:** sin ocupaciones, las vecinas son todas las filas puestas, y su valor se guarda al poner cada fila.
+  - Los minimax van por el respaldo, porque su valor es un máximo sobre todas las tuplas. Las 10 restricciones vivas de Saúl tienen ocupaciones.
+- **La demanda** de una celda es cuántas filas pendientes podrían tomar sus ocupaciones de las duras.
+- **Las pruebas,** en `pruebas/estrategias/goloso.lisp`. Ponen un horario al azar en un orden al azar y exigen que el daño de cada restricción sea lo que sube su valor con todas las filas, paso a paso y en total, en el dominio pequeño y en los cinco reales. Estropear a propósito una ocupación de Saúl las hace fallar. La suite pasó de unos 30 s a unos 42.
+- **La medición:** los cinco `ejecuciones/goloso-<dominio>.lisp` y `pruebas/estrategias/comparar_goloso.py`, que comprueba los criterios del plan. El voraz actual se mide como `busqueda_local.py --pasos 0`, que devuelve el arranque voraz sin dar ningún paso; es también el primer individuo del genético con la misma semilla.
+
+### 38.5 Resultados
+
+Cada celda da la media de duras / blandas y los segundos por corrida. El goloso y el voraz actual tienen 25 semillas, y la búsqueda local 3, con tiempos aproximados porque corrió en paralelo:
+
+| Dominio | Goloso | Voraz actual | Búsqueda local |
+|---|---|---|---|
+| tv | 0 / 0, en 0,07 s | 0 / 0, en 0,05 s | 0 / 0 |
+| tesis | 0 / 1,9, en 0,15 s | 0 / 3,0, en 0,14 s | 0 / 2,0, en 55 s |
+| SEDER | 0 / 11,4, en 0,02 s | 0 / 14,0, en 0,04 s | 0 / 11,0, en 5,5 s |
+| docentes | 0 / 2,0, en 0,50 s | 0 / 5,0, en 4,1 s | 0 / 5,0, en 166 s |
+| Saúl | 12,0 (9–18) / 1,4, en 1,6 s | 15,0 (10–20) / 7,7, en 17,5 s | 1,3 (0–3) / 3,7, en 812 s |
+
+- **Se cumplen todos los criterios del plan.**
+- **En Saúl,** casi todas las duras que quedan son choques de grupo: 9,3 de 12. Cada fila forzada añade una dura.
+- **El genético no cambió:** las corridas pequeñas de la fase 5, con 20 generaciones, son iguales campo a campo a las de antes del cambio.
+
+### 38.6 El goloso como arranque
+
+Son estimaciones, sin probar:
+
+- **Genético: el arranque pesa mucho** (§37, punto 42). Desde el goloso, Saúl terminaría con unas 2 o 3 duras menos de media, unas 10 frente a unas 13, y con 1 o 2 blandas en vez de entre 5 y 7.
+- **Búsqueda local: pesa poco.** El final seguiría entre 0 y 3 duras, y ahorraría medio minuto de los 11 a 18 que tarda.
+- **En las dos, docentes bajaría sus blandas de 5 a 2** (§37, punto 44).
+- **En tv, tesis y SEDER, el efecto es despreciable.**
+
+### 38.7 Lo que queda fuera
+
+- **`inicio-goloso`,** para arrancar el genético y la búsqueda local desde el goloso.
+- **Mover filas con las ocupaciones.** Falta poder quitar una fila de las tablas, y es lo que necesitan una búsqueda local rápida y la reparación tabú de `reparacion_tabu.md`.
+- **Ocupaciones para los minimax.**
+- **El apilamiento de docentes,** que es del modelo del dominio.
+- **El multiarranque.**

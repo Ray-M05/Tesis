@@ -56,5 +56,6 @@
       (emitir-restriccion restriccion destino stream))
     (emitir-evaluar destino stream)
     (emitir-tabla-de-ocupaciones destino stream)
+    (emitir-tabla-de-claves destino stream)
     (emitir-mostrar-resultado destino stream)
     (emitir-a-json destino stream)))

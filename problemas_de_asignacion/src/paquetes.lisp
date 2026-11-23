@@ -62,7 +62,8 @@
 
 (defpackage :estrategias
   (:use :cl :emision)
-  (:export #:estrategia #:estrategia-nombre #:genetico #:busqueda-local #:goloso #:operador
+  (:export #:estrategia #:estrategia-nombre #:genetico #:busqueda-local #:goloso #:reparacion-tabu
+           #:operador
            #:emitir-estrategia #:emitir-operador #:argumentos-de #:operadores-de))
 
 (defpackage :orquestacion

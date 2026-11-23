@@ -270,6 +270,30 @@
   (emitir-guardar-corrida estrategia destino stream
                           "print(f'duras {duras}, blandas {blandas}, {len(forzadas)} filas forzadas')"))
 
+;; Cada fila, en el orden del operador de orden, va a la celda de menor daño, y entre las
+;; empatadas elige el desempate. Una fila es forzada si su celda añadía duras.
+(defun emitir-pasada (estrategia destino stream nombre)
+  "Define NOMBRE(args, azar, opciones), la pasada golosa, que devuelve las posiciones y las filas forzadas."
+  (let ((criterio (funcion-de (estrategia-criterio estrategia))))
+    (emitir-lineas
+     destino stream
+     `(,(format nil "def ~a(args, azar, opciones):" nombre)
+       (,(format nil "dano = ~a()" (clase-de (estrategia-dano estrategia)))
+        ,(format nil "desempate = ~a(opciones)" (clase-de (estrategia-desempate estrategia)))
+        "posiciones, forzadas = [None] * FILAS, []"
+        ,(format nil "for i in ~a(azar, opciones):" (funcion-de (estrategia-orden estrategia)))
+        ("filas = {opcion: modelo.crear_fila(i, opcion) for opcion in opciones[i]}"
+         "danos = {opcion: dano.dano(fila) for opcion, fila in filas.items()}"
+         ,(format nil "menor = min(~a(*valor) for valor in danos.values())" criterio)
+         ,(format nil "empatadas = [opcion for opcion in opciones[i] if ~a(*danos[opcion]) == menor]" criterio)
+         "posiciones[i] = desempate.elegir(azar, i, empatadas)"
+         "dano.poner(filas[posiciones[i]])"
+         "desempate.quitar(i)"
+         "if danos[posiciones[i]][0] > 0:"
+         ("forzadas.append(i)"))
+        "return posiciones, forzadas"))))
+  (terpri stream))
+
 (defmethod emitir-estrategia ((estrategia estrategia-de-busqueda) (destino python) stream)
   (emitir-cabecera estrategia destino stream)
   (emitir-individuo-y-evaluador destino stream)
